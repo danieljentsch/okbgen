@@ -1,0 +1,12 @@
+packages: .
+
+source-repository-package
+    type: git
+    location: https://github.com/chessai/vector-circular.git
+    tag: 1d4256d6cd75a746b4f1e11e23bf6f591582bb55
+
+source-repository-package
+    type: git
+    location: https://github.com/noinia/hgeometry
+    tag: 0.15
+    subdir: hgeometry hgeometry-combinatorial
