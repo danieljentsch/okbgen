@@ -26,32 +26,31 @@ relativeborderwidth = 0.001
 height, width, originx, originy :: Int
 width = round $ cellsize * (keyboardwidth) / celltowidth
   where
-  (keyboardwidth, keyboardheight) = (cx sizecoord, cy sizecoord)
-      where
-        sizecoord = snd fr -# fst fr
-          where
-            fr = frame kbGrid makePointFrame
+    (keyboardwidth, keyboardheight) = (cx sizecoord, cy sizecoord)
+    sizecoord = snd fr -# fst fr
+    fr = frame kbGrid makePointFrame
+
 height = (round $ cellsize * (keyboardheight) / celltowidth)
   where
-  (keyboardwidth, keyboardheight) = (cx sizecoord, cy sizecoord)
-      where
-        sizecoord = snd fr -# fst fr
-          where
-            fr = frame kbGrid makePointFrame
+    (keyboardwidth, keyboardheight) = (cx sizecoord, cy sizecoord)
+    sizecoord = snd fr -# fst fr
+    fr = frame kbGrid makePointFrame
+
 originx = round $ cellsize * (offsetx) / celltowidth
   where
-  (keyboardwidth, keyboardheight) = asTuple sizecoord
-  (offsetx, offsety) = asTuple offset
-  offset = zero -# fst fr
-  sizecoord = snd fr -# fst fr
-  fr = frame kbGrid makePointFrame
+    (keyboardwidth, keyboardheight) = asTuple sizecoord
+    (offsetx, offsety) = asTuple offset
+    offset = zero -# fst fr
+    sizecoord = snd fr -# fst fr
+    fr = frame kbGrid makePointFrame
+
 originy = (round $ cellsize * (offsety) / celltowidth)
   where
-  (keyboardwidth, keyboardheight) = asTuple sizecoord
-  (offsetx, offsety) = asTuple offset
-  offset = zero -# fst fr
-  sizecoord = snd fr -# fst fr
-  fr = frame kbGrid makePointFrame
+    (keyboardwidth, keyboardheight) = asTuple sizecoord
+    (offsetx, offsety) = asTuple offset
+    offset = zero -# fst fr
+    sizecoord = snd fr -# fst fr
+    fr = frame kbGrid makePointFrame
 
 
 -- labels for keys.

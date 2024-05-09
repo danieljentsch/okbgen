@@ -41,6 +41,7 @@ instance Coordinates PlainCoord Float where
   rucoord (PlainCoord a b) (PlainCoord c d) = PlainCoord (max a c) (max b d)
 
 
+-- parentframe takes a list of coordinate pairs --  each interpreted as a rectangle -- and returns the coordinate pair representing the smallest rectangle containing the given rectangles.
 parentframehelper :: (RealFloat a, Coordinates c a) => [(c,c)] -> (c,c) -> (c,c)
 parentframehelper ((ll,ru):ces) (cll,cru) | null ces     = (cll,cru)
                                           | otherwise    = parentframehelper ces (llcoord ll cll,rucoord ru cru)
@@ -49,6 +50,10 @@ parentframe :: (RealFloat a, Coordinates c a) => [(c,c)] -> (c,c)
 parentframe (ce:ces) = parentframehelper ces ce
 
 -- Euler's Tone net
+-- The data is interpreted as follows
+-- EulerGrid <vector for octave step> <vector for fifth step> <vector for third step> <List Indizes representing octave coordinates for keys in net> <... fifth ...> <thirds>
+-- For example: "Eulergrid (1,0) (0.6,0.3) (0.35,-0.2) [(-4)..4] [(-3)..3] [(-1)..1]"
+-- for a keyboard ranging over 8 octaves, 6 fifth and 2 (major) thirds
 data EulerGrid = EulerGrid PlainCoord PlainCoord PlainCoord [Int] [Int] [Int]
 
 instance Grid EulerGrid EulerGridCoord EulerGridCoord PlainCoord Float where
