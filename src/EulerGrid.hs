@@ -13,13 +13,13 @@ import Grid
 
 infixl 6 +@@
 infixl 6 -@@
-data EulerGridCoord = EGC Int Int Int
+data EulerGridCoord = EulerGridCoord Int Int Int
 eZero :: EulerGridCoord
-eZero = EGC 0 0 0
+eZero = EulerGridCoord 0 0 0
 (+@@) :: EulerGridCoord -> EulerGridCoord -> EulerGridCoord
-(EGC o1 q1 g1) +@@ (EGC o2 q2 g2) = (EGC (o1 + o2) (q1 + q2) (g1 + g2))
+(EulerGridCoord o1 q1 g1) +@@ (EulerGridCoord o2 q2 g2) = (EulerGridCoord (o1 + o2) (q1 + q2) (g1 + g2))
 (-@@) :: EulerGridCoord -> EulerGridCoord -> EulerGridCoord
-(EGC o1 q1 g1) -@@ (EGC o2 q2 g2) = (EGC (o1 - o2) (q1 - q2) (g1 - g2))
+(EulerGridCoord o1 q1 g1) -@@ (EulerGridCoord o2 q2 g2) = (EulerGridCoord (o1 - o2) (q1 - q2) (g1 - g2))
 
 
 instance GridCoordinates EulerGridCoord
@@ -58,41 +58,41 @@ data EulerGrid = EulerGrid PlainCoord PlainCoord PlainCoord [Int] [Int] [Int]
 
 instance Grid EulerGrid EulerGridCoord EulerGridCoord PlainCoord Float where
   ingrid2 (EulerGrid oktave quinte gterz oktRange quintRange gterzRange) makeobject
-    = [makeobject ((fromIntegral o) • oktave +# (fromIntegral q) • quinte +# (fromIntegral g) • gterz, EGC o q g)
+    = [makeobject ((fromIntegral o) • oktave +# (fromIntegral q) • quinte +# (fromIntegral g) • gterz, EulerGridCoord o q g)
       | o <- oktRange, q <- quintRange, g <- gterzRange]
   frame (EulerGrid oktave quinte gterz oktRange quintRange gterzRange) makeobjectframe
-    = parentframe [makeobjectframe ((fromIntegral o) • oktave +# (fromIntegral q) • quinte +# (fromIntegral g) • gterz, EGC o q g)
+    = parentframe [makeobjectframe ((fromIntegral o) • oktave +# (fromIntegral q) • quinte +# (fromIntegral g) • gterz, EulerGridCoord o q g)
                   | o <- oktRange, q <- quintRange, g <- gterzRange]
-  pos (EulerGrid oktave quinte gterz oktRange quintRange qterzRange ) (EGC o q g)
+  pos (EulerGrid oktave quinte gterz oktRange quintRange qterzRange ) (EulerGridCoord o q g)
     = (fromIntegral o) • oktave +# (fromIntegral q) • quinte +# (fromIntegral g) • gterz
 
 --  pos EulerGrid oktave quinte gterz x y z = Coordinate ((cx oktave) * x + (cx quinte) * y + (cx gterz) * z,(cy oktave) * x, (cy quinte) * y, (cy gterz) * z)
 
-tn_CD =     EGC (-1) 2 0
-tn_CCisM =  EGC (-2) 3 1
-tn_CHis = EGC (-3) 4 2
-tn_CCesM =  EGC 0 1 (-2)
-tn_CH =     EGC (-1) 1 1
-tn_CB =     EGC 1 (-2) 0
-tn_CCesP =  EGC 2 (-3) (-1)
-tn_CDeses = EGC 3 (-4) (-2)
-tn_CCisP =  EGC 0 (-1) 2
-tn_CDes  =  EGC 1 (-1) (-1)
+tn_CD =     EulerGridCoord (-1) 2 0
+tn_CCisM =  EulerGridCoord (-2) 3 1
+tn_CHis = EulerGridCoord (-3) 4 2
+tn_CCesM =  EulerGridCoord 0 1 (-2)
+tn_CH =     EulerGridCoord (-1) 1 1
+tn_CB =     EulerGridCoord 1 (-2) 0
+tn_CCesP =  EulerGridCoord 2 (-3) (-1)
+tn_CDeses = EulerGridCoord 3 (-4) (-2)
+tn_CCisP =  EulerGridCoord 0 (-1) 2
+tn_CDes  =  EulerGridCoord 1 (-1) (-1)
 
 tn_EFis  =  tn_CD
-tn_EFesM  =  EGC 1 0 (-3)
+tn_EFesM  =  EulerGridCoord 1 0 (-3)
 tn_EEsM  =  tn_CCesM
 tn_EDis  =  tn_CH
-tn_EEses =  EGC 2 (-2) (-3)
+tn_EEses =  EulerGridCoord 2 (-2) (-3)
 tn_EEsP   =  tn_CCesP
-tn_EFesP  = EGC 3 (-4) (-2)
+tn_EFesP  = EulerGridCoord 3 (-4) (-2)
 tn_EF    =  tn_CDes
 
-tn_GisBes = EGC 2 (-1) (-4)
+tn_GisBes = EulerGridCoord 2 (-1) (-4)
 tn_GisAsM  = tn_EFesM
 tn_GisG   = tn_CCesM
 tn_GisGes = tn_EEses
-tn_GisAses = EGC 3 (-3) (-4)
+tn_GisAses = EulerGridCoord 3 (-3) (-4)
 tn_GisAsP = tn_CDeses
 tn_GisA   = tn_CDes
 
@@ -101,21 +101,21 @@ environ :: Int -> [EulerGridCoord]
 environ 0 = [ tn_CCisM, tn_CHis, tn_CCesM, tn_CH, tn_CCesP, tn_CDeses, tn_CCisP, tn_CDes]
 environ 1 = [ tn_EFesM, tn_EEsM, tn_EDis, tn_EEsP, tn_EFesP, tn_EF]
 environ 2 = [ tn_GisAsM, tn_GisG, tn_GisAses, tn_GisAsP, tn_GisA]
-environ (l) = map (\(EGC a b c) -> EGC (-a) (-b) (-c)) $ environ (-l)
+environ (l) = map (\(EulerGridCoord a b c) -> EulerGridCoord (-a) (-b) (-c)) $ environ (-l)
 
 -- old versions
-environ (-2) = [ EGC (-2) 1 4, EGC (-1) 0 3, EGC (-1) 1 2,                EGC (-2) 2 3, EGC (-3) 3 4, EGC (-1) 1 1]
---environ (-1) = [ EGC (-1) 0 2,                            EGC (-1) 0 3,  EGC 1 (-1) (-1), EGC (-2) 2 3,  EGC (-1) 1 1]
---environ 0    = [ EGC 0 1 (-1), EGC (-1) 1 1, EGC 1 (-1) (-2), EGC 0 (-1) 1, EGC 1 (-1) (-1), EGC (-1) 1 2]
---environ 1    = [ EGC 1 0 (-2),                            EGC 1 0 (-3),  EGC (-1) 1 1, EGC 2 (-2) (-3), EGC 1 (-1) (-1)]
-environ 2    = [ EGC 2 (-1) (-4), EGC 1 0 (-3), EGC 1 (-1) (-2),            EGC 2 (-2) (-3), EGC 3 (-3) (-4), EGC 1 (-1) (-1)]
+environ (-2) = [ EulerGridCoord (-2) 1 4, EulerGridCoord (-1) 0 3, EulerGridCoord (-1) 1 2,                EulerGridCoord (-2) 2 3, EulerGridCoord (-3) 3 4, EulerGridCoord (-1) 1 1]
+--environ (-1) = [ EulerGridCoord (-1) 0 2,                            EulerGridCoord (-1) 0 3,  EulerGridCoord 1 (-1) (-1), EulerGridCoord (-2) 2 3,  EulerGridCoord (-1) 1 1]
+--environ 0    = [ EulerGridCoord 0 1 (-1), EulerGridCoord (-1) 1 1, EulerGridCoord 1 (-1) (-2), EulerGridCoord 0 (-1) 1, EulerGridCoord 1 (-1) (-1), EulerGridCoord (-1) 1 2]
+--environ 1    = [ EulerGridCoord 1 0 (-2),                            EulerGridCoord 1 0 (-3),  EulerGridCoord (-1) 1 1, EulerGridCoord 2 (-2) (-3), EulerGridCoord 1 (-1) (-1)]
+environ 2    = [ EulerGridCoord 2 (-1) (-4), EulerGridCoord 1 0 (-3), EulerGridCoord 1 (-1) (-2),            EulerGridCoord 2 (-2) (-3), EulerGridCoord 3 (-3) (-4), EulerGridCoord 1 (-1) (-1)]
 
 {-
-environ (-2) = [              EGC (-1) 0 3, EGC 0 (-1) 2,               EGC (-2) 2 3, EGC (-3) (-3) 4,                                                    EGC (-1) 1 1]
-environ (-1) = [              EGC (-1) 0 3, EGC 0 (-1) 2, EGC 1 (-1) (-1), EGC (-2) 2 3,               EGC (-2) 3 1,                     EGC (-3) 4 2,    EGC (-1) 1 1]
-environ 0    = [EGC (-2) 3 1,               EGC 0 1 (-2), EGC (-1) 1 1,                                EGC 2 (-3) (-1), EGC 0 (-1) 2,                     EGC 1 (-1) (-1)]
-environ 1    = [              EGC 1 0 (-3), EGC 0 1 (-2), EGC (-1) 1 1, EGC 2 (-2) (-3),               EGC 2 (-3) (-1),                  EGC 3 (-4) (-2), EGC 1 (-1) (-1)]
-environ 2    = [              EGC 1 0 (-3), EGC 0 1 (-2),               EGC 2 (-2) (-3), EGC 3 3 (-4),                                                    EGC 1 (-1) (-1)]
+environ (-2) = [              EulerGridCoord (-1) 0 3, EulerGridCoord 0 (-1) 2,               EulerGridCoord (-2) 2 3, EulerGridCoord (-3) (-3) 4,                                                    EulerGridCoord (-1) 1 1]
+environ (-1) = [              EulerGridCoord (-1) 0 3, EulerGridCoord 0 (-1) 2, EulerGridCoord 1 (-1) (-1), EulerGridCoord (-2) 2 3,               EulerGridCoord (-2) 3 1,                     EulerGridCoord (-3) 4 2,    EulerGridCoord (-1) 1 1]
+environ 0    = [EulerGridCoord (-2) 3 1,               EulerGridCoord 0 1 (-2), EulerGridCoord (-1) 1 1,                                EulerGridCoord 2 (-3) (-1), EulerGridCoord 0 (-1) 2,                     EulerGridCoord 1 (-1) (-1)]
+environ 1    = [              EulerGridCoord 1 0 (-3), EulerGridCoord 0 1 (-2), EulerGridCoord (-1) 1 1, EulerGridCoord 2 (-2) (-3),               EulerGridCoord 2 (-3) (-1),                  EulerGridCoord 3 (-4) (-2), EulerGridCoord 1 (-1) (-1)]
+environ 2    = [              EulerGridCoord 1 0 (-3), EulerGridCoord 0 1 (-2),               EulerGridCoord 2 (-2) (-3), EulerGridCoord 3 3 (-4),                                                    EulerGridCoord 1 (-1) (-1)]
 -}
 
 -- arguments: Point1, Point2, weight of first (1- priority of other)
@@ -146,8 +146,8 @@ keyShapeLines :: EulerGrid -> Int -> [Geo.Line 2 Float]
 keyShapeLines eg@(EulerGrid vo vq vg ro rq rg) level
   = [ borderLine zero ((pos eg (relegcoord +@@ egcoord_center)) -# (pos eg egcoord_center)) level (getabsg relegcoord) | relegcoord <- environ level ]
   where
-    egcoord_center = EGC 0 0 level
-    getabsg (EGC o q g) = level + g
+    egcoord_center = EulerGridCoord 0 0 level
+    getabsg (EulerGridCoord o q g) = level + g
 
 -- arguments: Grid, Level(thirds)
 keyCorners :: EulerGrid -> Int -> [Geo.Point 2 Float]

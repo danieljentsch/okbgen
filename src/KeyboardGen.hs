@@ -218,7 +218,7 @@ makeCell (pos, _) = g_ [Transform_ <<- (translate (cx pos) (cy pos))] cell
 
 
 makePoint :: Coordinates c a => (c, EulerGridCoord) -> Element
-makePoint (pos, EGC octaves quints gterzes) = g_ [Transform_ <<- (translate (cx pos) (cy pos))]
+makePoint (pos, EulerGridCoord octaves quints gterzes) = g_ [Transform_ <<- (translate (cx pos) (cy pos))]
                                               (point gterzes <>
                                                (g_ [Transform_ <<- (matrix 1.0 0.0 0.0 (-1.0) 0.0 0.0)]
                                                  (text_   [ X_ <<- "0", Y_ <<- "0", Font_size_ <<- "0.04", Text_anchor_ <<- "middle", Fill_ <<- (getCCode LabelColor)]
@@ -227,7 +227,7 @@ makePoint (pos, EGC octaves quints gterzes) = g_ [Transform_ <<- (translate (cx 
 
 -- compute frame
 makePointFrame :: Coordinates c a => (c, EulerGridCoord) -> (c, c)
-makePointFrame (pos, EGC octaves quints gterzes) = tupleMap (pos +#) $ pointFrame gterzes
+makePointFrame (pos, EulerGridCoord octaves quints gterzes) = tupleMap (pos +#) $ pointFrame gterzes
 
 -- mind: size of cells: 1 !
 kbGrid :: EulerGrid
