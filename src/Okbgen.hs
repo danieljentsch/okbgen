@@ -3,7 +3,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE DataKinds #-}
 
-module Okbgen (bs_keyboard) where
+module Okbgen (bs_keyboard, result) where
 
 import Graphics.Svg
 import Data.Semigroup
