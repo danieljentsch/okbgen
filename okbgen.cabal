@@ -53,12 +53,21 @@ extra-doc-files:    CHANGELOG.md
 common warnings
     ghc-options: -w
 
+library
+  build-depends:    base,
+                    text,
+                    svg-builder,
+                    hgeometry ^>=0.15,
+                    vinyl
+  exposed-modules:  Okbgen
+  hs-source-dirs:   src
+
 executable okbgen
     -- Import common warning flags.
     import:           warnings
 
     -- .hs or .lhs file containing the Main module.
-    main-is:          KeyboardGen.hs
+    main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
     -- other-modules:

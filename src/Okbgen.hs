@@ -3,6 +3,7 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE DataKinds #-}
 
+module Okbgen (bs_keyboard) where
 
 import Graphics.Svg
 import Data.Semigroup
@@ -251,7 +252,7 @@ picture = g_ [Transform_ <<- (matrix c 0 0 (-c) (ox) (oy))] keyboard
     oy = fromIntegral originy
     c = celltowidth * w
 
+result :: Element
+result = svg picture
 
-main :: IO ()
-main = do
-  print $ svg picture
+bs_keyboard = renderBS result
