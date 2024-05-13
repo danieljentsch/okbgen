@@ -207,8 +207,9 @@ point :: Int -> Element
 point level = path_ [Stroke_ <<- getCCode Gray, Stroke_width_ <<- (toText relativeborderwidth), Fill_ <<- levelColor level, D_ <<- pointpathD level]
 -}
 
-point :: Int -> Element
-point level = path_ [Stroke_ <<- getCCode BorderColor, Stroke_width_ <<- (toText relativeborderwidth), Fill_ <<- fotoColors level, D_ <<- customPointPath level]
+point :: Int -> Int -> Int -> Element
+point oktave quinte level = path_ [Stroke_ <<- getCCode BorderColor, Stroke_width_ <<- (toText relativeborderwidth), Fill_ <<- fotoColors level, D_ <<- customPointPath level,
+                     Id_ <<- (T.pack $ "key:" ++ show oktave ++ ":" ++ show quinte ++ ":" ++ show level)]
 
 moveElement :: RealFloat a => Element -> a -> a -> Element
 moveElement e x y = g_ [Transform_ <<- (translate x y)] e
@@ -219,7 +220,7 @@ makeCell (pos, _) = g_ [Transform_ <<- (translate (cx pos) (cy pos))] cell
 
 makePoint :: Coordinates c a => (c, EulerGridCoord) -> Element
 makePoint (pos, EulerGridCoord octaves quints gterzes) = g_ [Transform_ <<- (translate (cx pos) (cy pos))]
-                                              (point gterzes <>
+                                              (point octaves quints gterzes <>
                                                (g_ [Transform_ <<- (matrix 1.0 0.0 0.0 (-1.0) 0.0 0.0)]
                                                  (text_   [ X_ <<- "0", Y_ <<- "0", Font_size_ <<- "0.04", Text_anchor_ <<- "middle", Fill_ <<- (getCCode LabelColor)]
                                                    (toElement (tonename octaves quints gterzes)))))
