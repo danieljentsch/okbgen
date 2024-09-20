@@ -80,7 +80,7 @@ executable okbgen
                       text,
                       svg-builder,
                       hgeometry ^>=0.14,
-                      vinyl,
+                      vinyl
 
     -- Directories containing source files.
     hs-source-dirs:   src
