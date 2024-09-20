@@ -60,7 +60,6 @@ library
                     hgeometry ^>=0.14,
                     vinyl
   exposed-modules:  Okbgen
-  other-modules:    OkbMath, EulerGrid, Grid
   hs-source-dirs:   src
 
 executable okbgen
@@ -81,8 +80,7 @@ executable okbgen
                       text,
                       svg-builder,
                       hgeometry ^>=0.15,
-                      vinyl,
-                      okbgen
+                      vinyl
 
     -- Directories containing source files.
     hs-source-dirs:   src
