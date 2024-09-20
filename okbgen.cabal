@@ -79,8 +79,8 @@ executable okbgen
     build-depends:    base,
                       text,
                       svg-builder,
-                      vinyl
                       hgeometry ^>=0.14,
+                      vinyl,
 
     -- Directories containing source files.
     hs-source-dirs:   src
