@@ -256,3 +256,4 @@ result :: Element
 result = svg picture
 
 bs_keyboard = renderBS result
+text_keyboard = renderText result
