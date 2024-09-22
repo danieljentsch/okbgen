@@ -9,7 +9,7 @@ import Graphics.Svg
 import Data.Semigroup
 import qualified Data.Text as T
 import qualified Data.Ix as DI
-import qualified Geometry as Geo
+import qualified LinesGeometry as LG
 
 import Grid
 import EulerGrid
@@ -19,7 +19,7 @@ import EulerGrid
 
 -- data LayoutNode = [];
 
-cellsize, celltowidth, relativeborderwidth :: Float
+cellsize, celltowidth, relativeborderwidth :: Double
 cellsize = 30.0
 celltowidth = 0.1
 relativeborderwidth = 0.001
@@ -196,7 +196,7 @@ pointpathD level = (\(c:cs) -> ((uncurry mA) c <> mconcat (map (uncurry lA) cs) 
 
 -- argument: level (thirds)
 plainCoordKeyCorners :: Int -> [PlainCoord]
-plainCoordKeyCorners level = [ PlainCoord x y | (Geo.Point2 x y) <- keyCorners kbGrid level ]
+plainCoordKeyCorners level = [ PlainCoord x y | (x, y) <- (map LG.toPair $ keyCorners kbGrid level) ]
 
 -- argument: level (thirds)
 customPointPath :: Int -> T.Text

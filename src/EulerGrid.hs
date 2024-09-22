@@ -5,7 +5,7 @@
 
 module EulerGrid where
 
-import qualified Geometry as Geo
+import qualified LinesGeometry as LG
 import Data.Vinyl.CoRec
 import Data.Maybe
 
@@ -25,9 +25,9 @@ eZero = EulerGridCoord 0 0 0
 instance GridCoordinates EulerGridCoord
 
 
-data PlainCoord = PlainCoord Float Float
+data PlainCoord = PlainCoord Double Double
 
-instance Coordinates PlainCoord Float where
+instance Coordinates PlainCoord Double where
   coord (a, b) = PlainCoord a b
   coordfromTuple (PlainCoord a b) = (a, b)
   cx (PlainCoord a b) = a
@@ -56,7 +56,7 @@ parentframe (ce:ces) = parentframehelper ces ce
 -- for a keyboard ranging over 8 octaves, 6 fifth and 2 (major) thirds
 data EulerGrid = EulerGrid PlainCoord PlainCoord PlainCoord [Int] [Int] [Int]
 
-instance Grid EulerGrid EulerGridCoord EulerGridCoord PlainCoord Float where
+instance Grid EulerGrid EulerGridCoord EulerGridCoord PlainCoord Double where
   ingrid2 (EulerGrid oktave quinte gterz oktRange quintRange gterzRange) makeobject
     = [makeobject ((fromIntegral o) • oktave +# (fromIntegral q) • quinte +# (fromIntegral g) • gterz, EulerGridCoord o q g)
       | o <- oktRange, q <- quintRange, g <- gterzRange]
@@ -118,12 +118,14 @@ environ 1    = [              EulerGridCoord 1 0 (-3), EulerGridCoord 0 1 (-2), 
 environ 2    = [              EulerGridCoord 1 0 (-3), EulerGridCoord 0 1 (-2),               EulerGridCoord 2 (-2) (-3), EulerGridCoord 3 3 (-4),                                                    EulerGridCoord 1 (-1) (-1)]
 -}
 
+
+
 -- arguments: Point1, Point2, weight of first (1- priority of other)
-borderLine :: PlainCoord -> PlainCoord -> Int -> Int -> Geo.Line 2 Float
-borderLine (PlainCoord x1 y1) (PlainCoord x2 y2) first_level second_level = Geo.Line middle direction
+borderLine :: PlainCoord -> PlainCoord -> Int -> Int -> LG.Line
+borderLine (PlainCoord x1 y1) (PlainCoord x2 y2) first_level second_level = LG.LineThroughPointInDirection middle direction
   where
-    middle = Geo.Point2 ((x1 + x2) / 2) ((first_weight * y1 + (1 - first_weight) * y2))
-    direction = Geo.Vector2 (- ((y2 - y1))) (vert_factor * (x2 - x1))
+    middle = LG.makeVect2 ((x1 + x2) / 2) ((first_weight * y1 + (1 - first_weight) * y2))
+    direction = LG.makeVect2 (- ((y2 - y1))) (vert_factor * (x2 - x1))
     first_weight                            = rankToWeight diff_abs_level
     rankToWeight r  | r == 2                = 0.5
                     | r == 1                = 0.5
@@ -142,7 +144,7 @@ borderLine (PlainCoord x1 y1) (PlainCoord x2 y2) first_level second_level = Geo.
 
 
 -- arguments: Grid, Level(thirds)
-keyShapeLines :: EulerGrid -> Int -> [Geo.Line 2 Float]
+keyShapeLines :: EulerGrid -> Int -> [LG.Line]
 keyShapeLines eg@(EulerGrid vo vq vg ro rq rg) level
   = [ borderLine zero ((pos eg (relegcoord +@@ egcoord_center)) -# (pos eg egcoord_center)) level (getabsg relegcoord) | relegcoord <- environ level ]
   where
@@ -150,26 +152,10 @@ keyShapeLines eg@(EulerGrid vo vq vg ro rq rg) level
     getabsg (EulerGridCoord o q g) = level + g
 
 -- arguments: Grid, Level(thirds)
-keyCorners :: EulerGrid -> Int -> [Geo.Point 2 Float]
+keyCorners :: EulerGrid -> Int -> [LG.Vect2]
 keyCorners eg level
-  = catMaybes [ (asA (Geo.intersect (lineList!!(mod n lineListLen)) (lineList!!(mod (n+1) lineListLen))) :: (Maybe (Geo.Point 2 Float)))
-    | n <- [0..lineListLen] ]
+  = catMaybes [ LG.intersect (lineList!!(mod n lineListLen)) (lineList!!(mod (n+1) lineListLen))
+              | n <- [0..lineListLen] ]
   where
     lineList = keyShapeLines eg level
     lineListLen = length lineList
-
--- a,b :: Geo.Point 2 Float
--- a = Geo.Point2 (2 :: Float) 2
--- b = Geo.Point2 (1 :: Float) 1
-
--- l :: Geo.Line (2 :: Geo.Vector.VectorFamily.Arity) Float
--- l = Geo.lineThrough a b
-
-
--- x-coeff, y-coeff, other side
--- type line = line Float Float Float
-
-{-
-mittelsenkrechte :: PlainCoord -> PlainCoord -> line
-mittelsenkrechte PlainCoord
--}

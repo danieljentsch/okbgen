@@ -57,9 +57,10 @@ library
   build-depends:    base,
                     text,
                     svg-builder,
-                    hgeometry ^>=0.14,
+                    hmatrix,
                     vinyl
-  exposed-modules:  Okbgen
+  exposed-modules:  Okbgen, LinesGeometry
+  other-modules:    EulerGrid, Grid
   hs-source-dirs:   src
 
 executable okbgen
@@ -79,8 +80,9 @@ executable okbgen
     build-depends:    base,
                       text,
                       svg-builder,
-                      hgeometry ^>=0.14,
-                      vinyl
+                      vinyl,
+                      hmatrix,
+                      okbgen
 
     -- Directories containing source files.
     hs-source-dirs:   src
