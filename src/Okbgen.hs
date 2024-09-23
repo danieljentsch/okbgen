@@ -241,7 +241,7 @@ makePointFrame (pos, EulerGridCoord octaves quints gterzes) = tupleMap (pos +#) 
 
 -- mind: size of cells: 1 !
 kbGrid :: EulerGrid
-kbGrid = EulerGrid (PlainCoord 1.0 0.0) (PlainCoord quintx quinty) (PlainCoord gterzx gterzy) [(-6)..6] [(-6)..6] [(-2)..2]
+kbGrid = EulerGrid (PlainCoord 1.0 0.0) (PlainCoord quintx quinty) (PlainCoord gterzx gterzy) [(-8)..8] [(-10)..10] [(-2)..2]
   where
     quintx = (log 3.0 - log 2.0) / (log 2.0)
     gterzx = (log 5.0 - log 4.0) / (log 2.0)
