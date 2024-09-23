@@ -252,13 +252,14 @@ keyboard :: Element
 keyboard = mconcat (ingrid2 kbGrid makePoint)
 --keyboard = g_ [] $ (ingrid Stdhexgrid cell cellsx cellsy)
 
-picture = g_ [Transform_ <<- (matrix c 0 0 (-c) (ox) (oy))] keyboard
+picture = g_ [Transform_ <<- (matrix sx 0 0 sy (ox) (oy))] keyboard
   where
     w = fromIntegral width
     h = fromIntegral height
     ox = fromIntegral originx
     oy = fromIntegral originy
-    c = celltowidth * w
+    sx = fromIntegral scalex
+    sy = fromIntegral scaley
 
 result :: Element
 result = svg picture
