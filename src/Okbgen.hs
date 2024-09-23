@@ -24,6 +24,14 @@ cellsize = 30.0
 celltowidth = 0.1
 relativeborderwidth = 0.001
 
+height, width, originx, originy, scalex, scaley :: Int
+height = 1080
+width = 1920
+originx = 1000
+originy = 540
+scalex = 400
+scaley = -400
+{--
 height, width, originx, originy :: Int
 width = round $ cellsize * (keyboardwidth) / celltowidth
   where
@@ -52,7 +60,7 @@ originy = (round $ cellsize * (offsety) / celltowidth)
     offset = zero -# fst fr
     sizecoord = snd fr -# fst fr
     fr = frame kbGrid makePointFrame
-
+--}
 
 -- labels for keys.
 tonename :: Int -> Int -> Int -> T.Text
