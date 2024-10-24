@@ -1,5 +1,7 @@
 # okbgen
 
+Orthogonal Keyboard Generator
+
 ## Usage
 
 If you have cabal installed, you can run the script
