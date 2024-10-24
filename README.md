@@ -1,6 +1,6 @@
 # okbgen
 
-Orthogonal Keyboard Generator
+Orthotonal Keyboard Generator
 
 ## Usage
 
