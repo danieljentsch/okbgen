@@ -3,13 +3,17 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module EulerGrid where
+module EulerGrid
+  ( EulerGrid(..),
+    EulerGridCoord(..),
+    PlainCoord(..),
+    keyCorners
+  ) where
 
-import qualified PlainGeometry as PG
-import Data.Vinyl.CoRec
-import Data.Maybe
+import qualified PlainGeometry as PG (Vect2, makeVect2, Line(..), intersect)
+import Grid (Coordinates(..), GridCoordinates, Grid(..))
 
-import Grid
+import Data.Maybe (catMaybes)
 
 infixl 6 +@@
 infixl 6 -@@

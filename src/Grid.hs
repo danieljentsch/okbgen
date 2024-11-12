@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
-module Grid where
+module Grid (Coordinates(..), GridCoordinates, Grid(..)) where
 
 {-
 class Summable s where

@@ -5,14 +5,32 @@
 
 module Okbgen (bs_keyboard, text_keyboard, result) where
 
-import Graphics.Svg
-import Data.Semigroup
-import qualified Data.Text as T
-import qualified Data.Ix as DI
-import qualified PlainGeometry as PG
+import Grid (Coordinates(..), ingrid2)
+import EulerGrid (EulerGrid(..), EulerGridCoord(..), PlainCoord(..), keyCorners)
 
-import Grid
-import EulerGrid
+import Graphics.Svg (Element,
+                     doctype,
+                     lA,
+                     mA,
+                     matrix,
+                     toElement,
+                     toText,
+                     translate,
+                     renderText,
+                     renderBS,
+                     with,
+                     z,
+                     AttrTag(Transform_, Fill_, Font_size_, Text_anchor_, X_, Y_, D_, Id_, Stroke_width_, Stroke_, Height_, Width_, Version_),
+                     text_,
+                     g_,
+                     path_,
+                     svg11_,
+                     (<<-))
+import Data.Semigroup (stimesMonoid)
+import Data.Text (Text)
+import qualified Data.Text as T (toTitle, pack)
+import qualified Data.Ix as DI (inRange)
+import qualified PlainGeometry as PG (toPair)
 
 
 -- data Layout = LayoutNode
@@ -63,28 +81,28 @@ originy = (round $ cellsize * (offsety) / celltowidth)
 --}
 
 -- labels for keys.
-tonename :: Int -> Int -> Int -> T.Text
+tonename :: Int -> Int -> Int -> Text
 tonename octaves quints gterzes = commata <> oktavetonename
   where
     commata                     | gterzes > 0          = stimesMonoid gterzes ","
                                 | gterzes == 0         = ""
                                 | gterzes < 0          = stimesMonoid (-gterzes) "\'"
-    oktavetonename              | whichoctave > 0      = tonenameroot 0 <> stimesMonoid whichoctave ("\'" :: T.Text)
+    oktavetonename              | whichoctave > 0      = tonenameroot 0 <> stimesMonoid whichoctave ("\'" :: Text)
                                 | whichoctave == 0     = tonenameroot 0
                                 | whichoctave < 0      = tonenameroot 1 <> stimesMonoid (-1 - whichoctave) ","
     whichoctave                                        = (floor logdesttobase) :: Int
     tonenameroot cas                                   = makecase cas $ quintrow (quints + gterzes * 4)
     logdesttobase                                      = (log 2.0 * fromIntegral octaves + log (3.0/2.0) * fromIntegral quints + log (5.0/4.0) * fromIntegral gterzes) / log 2.0
-    makecase cas txt            | cas == 0             = (txt :: T.Text)
-                                | cas == 1             = T.toTitle (txt :: T.Text) --T.toUpper (T.take 1 (txt :: T.Text)) <> T.takeEnd 1 (txt :: T.Text)
-    quintrow n                  |         n < (-8)     = qrflat!!(mod (n+1) 7) <> stimesMonoid ((-1) - div (n+1) 7 ) ("es" :: T.Text)
+    makecase cas txt            | cas == 0             = (txt :: Text)
+                                | cas == 1             = T.toTitle (txt :: Text) --T.toUpper (T.take 1 (txt :: Text)) <> T.takeEnd 1 (txt :: Text)
+    quintrow n                  |         n < (-8)     = qrflat!!(mod (n+1) 7) <> stimesMonoid ((-1) - div (n+1) 7 ) ("es" :: Text)
                                 | DI.inRange (-8, -2) n = qrflat!!((n+1)+7)
                                 | DI.inRange (-1, 5) n  = qrbase!!(n+1)
                                 | DI.inRange (6, 12) n = qrsharp!!((n+1)-7)
-                                | 13   <= n            = qrsharp!!(mod (n+1) 7) <> stimesMonoid (div (n+1) 7 - 1) ("is" :: T.Text)
-    qrbase                                             = ["f","c","g","d","a","e","h"] :: [T.Text]
-    qrsharp                                            = ["fis","cis","gis","dis","ais","eis","his"] :: [T.Text]
-    qrflat                                             = ["fes","ces","ges","des","as","es","b"] :: [T.Text]
+                                | 13   <= n            = qrsharp!!(mod (n+1) 7) <> stimesMonoid (div (n+1) 7 - 1) ("is" :: Text)
+    qrbase                                             = ["f","c","g","d","a","e","h"] :: [Text]
+    qrsharp                                            = ["fis","cis","gis","dis","ais","eis","his"] :: [Text]
+    qrflat                                             = ["fes","ces","ges","des","as","es","b"] :: [Text]
 
 
 -- svg boilerplate
@@ -120,7 +138,7 @@ data Color = Black | White | Gray | DarkGray
            | Blue | DarkBlue | LabelColor | BorderColor
            | Reddishish | Reddish | Blueishish | Blueish
 
-getCCode :: Color -> T.Text
+getCCode :: Color -> Text
 getCCode Black = "#000000"
 getCCode White = "#ffffff"
 getCCode Gray = "#aaaaaa"
@@ -141,20 +159,20 @@ getCCode Reddish = "#550000"
 getCCode Blueishish = "#0000ff"
 getCCode Blueish = "#000055"
 
-fotoColors :: Int -> T.Text
+fotoColors :: Int -> Text
 fotoColors (-2) = "#0f0e14"
 fotoColors (-1) = "#9db2c5"
 fotoColors    0 = "#c2c0b9"
 fotoColors    1 = "#c48569"
 fotoColors    2 = "#3f2a1e"
 
-edgepathD :: [Int] -> T.Text
+edgepathD :: [Int] -> Text
 edgepathD (c:cs) = uncurry mA (getedge c)
                   <> mconcat (map (uncurry lA . getedge) (c:cs))
                   <> z
                   <> uncurry mA (getedge c)
 
-edgepathDS :: RealFloat a => [a] -> T.Text
+edgepathDS :: RealFloat a => [a] -> Text
 edgepathDS (c:cs) = uncurry mA (getedgeS c)
                   <> mconcat (map (uncurry lA . getedgeS) (c:cs))
                   <> z
@@ -176,7 +194,7 @@ cell = celltile [0.0, 1.0, 2.0, 3.0, 4.0, 5.0] Ebony
        <> celltile [2.0+1.0/3.0, 3.0, 4.0] Yellow
 
 
-levelColor :: Int -> T.Text
+levelColor :: Int -> Text
 levelColor (-2) = getCCode Blueish
 levelColor (-1) = getCCode Blueishish
 levelColor 0 = getCCode White
@@ -186,7 +204,7 @@ levelColor _ = getCCode Black
 
 
 {-
-levelColor :: Int -> T.Text
+levelColor :: Int -> Text
 levelColor (-2) = getCCode BlueDarkBrown
 levelColor (-1) = getCCode BlueBrown
 levelColor 0 = getCCode Ebony
@@ -213,7 +231,7 @@ raute :: Coordinates c a => (c,c) -> [c]
 raute (ll,ru) = map coord [(cx ru,0), (0, cy ru), (cx ll, 0), (0, cy ll)]
 
 
-pointpathD :: Int -> T.Text
+pointpathD :: Int -> Text
 pointpathD level = (\(c:cs) -> ((uncurry mA) c <> mconcat (map (uncurry lA) cs) <> (uncurry mA) c <> z))
                    $ map coordfromTuple (raute $ ((pointFrame level) :: (PlainCoord, PlainCoord)))
 
@@ -222,7 +240,7 @@ plainCoordKeyCorners :: Int -> [PlainCoord]
 plainCoordKeyCorners level = [ PlainCoord x y | (x, y) <- (map PG.toPair $ keyCorners kbGrid level) ]
 
 -- argument: level (thirds)
-customPointPath :: Int -> T.Text
+customPointPath :: Int -> Text
 customPointPath level = (\(c:cs) -> ((uncurry mA) c <> mconcat (map (uncurry lA) cs) <> (uncurry mA) c <> z))
                    $ map coordfromTuple (plainCoordKeyCorners level)
 

@@ -1,9 +1,14 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module PlainGeometry where
+module PlainGeometry
+  ( Vect2,
+    makeVect2,
+    toPair,
+    Line(..),
+    intersect ) where
 
-import Numeric.LinearAlgebra.Data
-import Numeric.LinearAlgebra
+import Numeric.LinearAlgebra.Data (Vector, fromList, toList, Matrix, flatten, fromRows, fromLists, cols)
+import Numeric.LinearAlgebra (nullspace, linearSolve)
 import Control.Monad (join)
 
 type Vect2 = Vector Double
