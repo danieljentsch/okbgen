@@ -51,12 +51,3 @@ intersect (LineByEquation a1 b1 c1) (LineByEquation a2 b2 c2) =
   flatten <$> (linearSolve (fromLists [[a1, b1], [a2, b2]]) $ fromLists [[c1],[c2]])
 intersect l m = let [le, me] = (map getLineEquation) $ [l, m] in
                   join $ ((Just intersect) <*> le) <*> me
-
-{--
-intersect :: Line -> Line -> Maybe PlainCoord
-intersect
-  (LineThroughPoints (PlainCoord ax1 ay1) (PlainCoord ax2 ay2))
-  (LineThroughPoints (PlainCoord bx1 by1) (PlainCoord bx2 by2))
-  = let solution = 
-          where nullSpace a = snd $ rightSV a
---}

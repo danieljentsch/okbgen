@@ -109,19 +109,7 @@ environ (l) = map (\(EulerGridCoord a b c) -> EulerGridCoord (-a) (-b) (-c)) $ e
 
 -- old versions
 environ (-2) = [ EulerGridCoord (-2) 1 4, EulerGridCoord (-1) 0 3, EulerGridCoord (-1) 1 2,                EulerGridCoord (-2) 2 3, EulerGridCoord (-3) 3 4, EulerGridCoord (-1) 1 1]
---environ (-1) = [ EulerGridCoord (-1) 0 2,                            EulerGridCoord (-1) 0 3,  EulerGridCoord 1 (-1) (-1), EulerGridCoord (-2) 2 3,  EulerGridCoord (-1) 1 1]
---environ 0    = [ EulerGridCoord 0 1 (-1), EulerGridCoord (-1) 1 1, EulerGridCoord 1 (-1) (-2), EulerGridCoord 0 (-1) 1, EulerGridCoord 1 (-1) (-1), EulerGridCoord (-1) 1 2]
---environ 1    = [ EulerGridCoord 1 0 (-2),                            EulerGridCoord 1 0 (-3),  EulerGridCoord (-1) 1 1, EulerGridCoord 2 (-2) (-3), EulerGridCoord 1 (-1) (-1)]
 environ 2    = [ EulerGridCoord 2 (-1) (-4), EulerGridCoord 1 0 (-3), EulerGridCoord 1 (-1) (-2),            EulerGridCoord 2 (-2) (-3), EulerGridCoord 3 (-3) (-4), EulerGridCoord 1 (-1) (-1)]
-
-{-
-environ (-2) = [              EulerGridCoord (-1) 0 3, EulerGridCoord 0 (-1) 2,               EulerGridCoord (-2) 2 3, EulerGridCoord (-3) (-3) 4,                                                    EulerGridCoord (-1) 1 1]
-environ (-1) = [              EulerGridCoord (-1) 0 3, EulerGridCoord 0 (-1) 2, EulerGridCoord 1 (-1) (-1), EulerGridCoord (-2) 2 3,               EulerGridCoord (-2) 3 1,                     EulerGridCoord (-3) 4 2,    EulerGridCoord (-1) 1 1]
-environ 0    = [EulerGridCoord (-2) 3 1,               EulerGridCoord 0 1 (-2), EulerGridCoord (-1) 1 1,                                EulerGridCoord 2 (-3) (-1), EulerGridCoord 0 (-1) 2,                     EulerGridCoord 1 (-1) (-1)]
-environ 1    = [              EulerGridCoord 1 0 (-3), EulerGridCoord 0 1 (-2), EulerGridCoord (-1) 1 1, EulerGridCoord 2 (-2) (-3),               EulerGridCoord 2 (-3) (-1),                  EulerGridCoord 3 (-4) (-2), EulerGridCoord 1 (-1) (-1)]
-environ 2    = [              EulerGridCoord 1 0 (-3), EulerGridCoord 0 1 (-2),               EulerGridCoord 2 (-2) (-3), EulerGridCoord 3 3 (-4),                                                    EulerGridCoord 1 (-1) (-1)]
--}
-
 
 
 -- arguments: Point1, Point2, weight of first (1- priority of other)
