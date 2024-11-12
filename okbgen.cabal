@@ -59,9 +59,9 @@ library
                     svg-builder,
                     hmatrix,
                     vinyl
-  exposed-modules:  Okbgen, PlainGeometry
-  other-modules:    EulerGrid, Grid
-  hs-source-dirs:   src
+  exposed-modules:  Okbgen
+  other-modules:    EulerGrid, Grid, PlainGeometry
+  hs-source-dirs:   src-lib
 
 executable okbgen
     -- Import common warning flags.
@@ -87,9 +87,7 @@ executable okbgen
     -- Directories containing source files.
     hs-source-dirs:   src
 
-    other-modules: Grid,
-                   EulerGrid,
-                   Okbgen,
+    --other-modules:
 
     -- Base language which the package is written in.
     default-language: Haskell2010
