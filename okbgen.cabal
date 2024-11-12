@@ -59,7 +59,7 @@ library
                     svg-builder,
                     hmatrix,
                     vinyl
-  exposed-modules:  Okbgen, LinesGeometry
+  exposed-modules:  Okbgen, PlainGeometry
   other-modules:    EulerGrid, Grid
   hs-source-dirs:   src
 

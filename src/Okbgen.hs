@@ -9,7 +9,7 @@ import Graphics.Svg
 import Data.Semigroup
 import qualified Data.Text as T
 import qualified Data.Ix as DI
-import qualified LinesGeometry as LG
+import qualified PlainGeometry as PG
 
 import Grid
 import EulerGrid
@@ -118,6 +118,7 @@ data Color = Black | White | Gray | DarkGray
            | BlueBrown | BlueDarkBrown
            | Yellow | DarkYellow
            | Blue | DarkBlue | LabelColor | BorderColor
+           | Reddishish | Reddish | Blueishish | Blueish
 
 getCCode :: Color -> T.Text
 getCCode Black = "#000000"
@@ -135,7 +136,10 @@ getCCode Blue = "#0000ff"
 getCCode DarkBlue = "#000077"
 getCCode LabelColor = "#000000"
 getCCode BorderColor = "#000000"
-
+getCCode Reddishish = "#ff0000"
+getCCode Reddish = "#550000"
+getCCode Blueishish = "#0000ff"
+getCCode Blueish = "#000055"
 
 fotoColors :: Int -> T.Text
 fotoColors (-2) = "#0f0e14"
@@ -171,6 +175,17 @@ cell = celltile [0.0, 1.0, 2.0, 3.0, 4.0, 5.0] Ebony
        <> celltile [0.0,  1.0, -2.0/3.0] Blue
        <> celltile [2.0+1.0/3.0, 3.0, 4.0] Yellow
 
+
+levelColor :: Int -> T.Text
+levelColor (-2) = getCCode Blueish
+levelColor (-1) = getCCode Blueishish
+levelColor 0 = getCCode White
+levelColor 1 = getCCode Reddishish
+levelColor 2 = getCCode Reddish
+levelColor _ = getCCode Black
+
+
+{-
 levelColor :: Int -> T.Text
 levelColor (-2) = getCCode BlueDarkBrown
 levelColor (-1) = getCCode BlueBrown
@@ -178,7 +193,7 @@ levelColor 0 = getCCode Ebony
 levelColor 1 = getCCode Brown
 levelColor 2 = getCCode DarkBrown
 levelColor _ = getCCode Black
-
+-}
 
 pointscalefactor :: RealFloat a => a
 pointscalefactor = 0.06
@@ -204,7 +219,7 @@ pointpathD level = (\(c:cs) -> ((uncurry mA) c <> mconcat (map (uncurry lA) cs) 
 
 -- argument: level (thirds)
 plainCoordKeyCorners :: Int -> [PlainCoord]
-plainCoordKeyCorners level = [ PlainCoord x y | (x, y) <- (map LG.toPair $ keyCorners kbGrid level) ]
+plainCoordKeyCorners level = [ PlainCoord x y | (x, y) <- (map PG.toPair $ keyCorners kbGrid level) ]
 
 -- argument: level (thirds)
 customPointPath :: Int -> T.Text
@@ -217,7 +232,7 @@ point level = path_ [Stroke_ <<- getCCode Gray, Stroke_width_ <<- (toText relati
 -}
 
 point :: Int -> Int -> Int -> Element
-point oktave quinte level = path_ [Stroke_ <<- getCCode BorderColor, Stroke_width_ <<- (toText relativeborderwidth), Fill_ <<- fotoColors level, D_ <<- customPointPath level,
+point oktave quinte level = path_ [Stroke_ <<- getCCode BorderColor, Stroke_width_ <<- (toText relativeborderwidth), Fill_ <<- levelColor level, D_ <<- customPointPath level,
                      Id_ <<- (T.pack $ "key:" ++ show oktave ++ ":" ++ show quinte ++ ":" ++ show level)]
 
 moveElement :: RealFloat a => Element -> a -> a -> Element

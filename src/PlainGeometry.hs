@@ -1,6 +1,6 @@
-{-# LANGUAGE FlexibleContexts#-}
+{-# LANGUAGE FlexibleContexts #-}
 
-module LinesGeometry where
+module PlainGeometry where
 
 import Numeric.LinearAlgebra.Data
 import Numeric.LinearAlgebra
