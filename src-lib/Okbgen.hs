@@ -245,7 +245,7 @@ customPointPath level = (\(c:cs) -> ((uncurry mA) c <> mconcat (map (uncurry lA)
                    $ map coordfromTuple (plainCoordKeyCorners level)
 
 point :: Int -> Int -> Int -> Element
-point oktave quinte level = path_ [Stroke_ <<- getCCode BorderColor, Stroke_width_ <<- (toText relativeborderwidth), Fill_ <<- levelColor level, D_ <<- customPointPath level,
+point oktave quinte level = path_ [Stroke_ <<- getCCode BorderColor, Stroke_width_ <<- (toText relativeborderwidth), Fill_ <<- fotoColors level, D_ <<- customPointPath level,
                      Id_ <<- (T.pack $ "key:" ++ show oktave ++ ":" ++ show quinte ++ ":" ++ show level)]
 
 moveElement :: RealFloat a => Element -> a -> a -> Element
