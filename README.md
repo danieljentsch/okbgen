@@ -4,7 +4,12 @@ Orthotonal Keyboard Generator
 
 ## Usage
 
-If you have cabal installed, you can run the script
+Make sure that you have (on Debian) the packages `liblapack-dev` and `libblas-dev` installed. For example:
+```
+# apt-get update && apt-get install liblapack-dev libblas-dev
+```
+
+If you have cabal installed, you can run then run the script
 ```
 init_with_cabal.sh
 ```
