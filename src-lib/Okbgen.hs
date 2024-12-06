@@ -123,6 +123,9 @@ data OkbParam = OkbParam { opCanvasSize :: (Float, Float),
                            opGridThirdsRange :: (Int, Int),
                            opKeyColors :: (Int -> Color) }
 
+instance Show OkbParam where
+  show pars = show (rawParamDeconstructor pars)
+
 -- standard values
 stdColors :: Int -> String
 stdColors (-2) = "#0f0e14"
