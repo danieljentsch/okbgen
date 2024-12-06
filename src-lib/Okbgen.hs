@@ -249,7 +249,7 @@ tolerantParamBuilder defaultP canvasPs gridPs colorStrings =
 
 okbgen :: OkbParam -> Element
 okbgen (OkbParam (sizeX, sizeY) (scaleX, scaleY) (orX, orY) (octMin, octMax) (fifthsMin, fifthsMax) (thirdsMin, thirdsMax) colorMap) = svg picture where
-  picture = g_ [Transform_ <<- (matrix scaleX 0 0 scaleY (orX) (orY))] keyboard
+  picture = g_ [Transform_ <<- (matrix scaleX 0 0 (-scaleY) (orX) (orY))] keyboard
   -- svg boilerplate
   svg :: Element -> Element
   svg content = doctype <> with (svg11_ content) [Version_ <<- "1.1",
