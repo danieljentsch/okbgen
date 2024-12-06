@@ -107,10 +107,11 @@ environ 1 = [ tn_EFesM, tn_EEsM, tn_EDis, tn_EEsP, tn_EFesP, tn_EF]
 environ 2 = [ tn_GisAsM, tn_GisG, tn_GisAses, tn_GisAsP, tn_GisA]
 environ (l) = map (\(EulerGridCoord a b c) -> EulerGridCoord (-a) (-b) (-c)) $ environ (-l)
 
+{-
 -- old versions
 environ (-2) = [ EulerGridCoord (-2) 1 4, EulerGridCoord (-1) 0 3, EulerGridCoord (-1) 1 2,                EulerGridCoord (-2) 2 3, EulerGridCoord (-3) 3 4, EulerGridCoord (-1) 1 1]
 environ 2    = [ EulerGridCoord 2 (-1) (-4), EulerGridCoord 1 0 (-3), EulerGridCoord 1 (-1) (-2),            EulerGridCoord 2 (-2) (-3), EulerGridCoord 3 (-3) (-4), EulerGridCoord 1 (-1) (-1)]
-
+-}
 
 -- arguments: Point1, Point2, weight of first (1- priority of other)
 borderLine :: PlainCoord -> PlainCoord -> Int -> Int -> PG.Line
