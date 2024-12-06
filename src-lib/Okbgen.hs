@@ -9,6 +9,7 @@ module Okbgen (Color(..), mkColorHTML, getColorCode, stdParams, orBlack, OkbPara
 import Grid (Coordinates(..), ingrid2)
 import EulerGrid (EulerGrid(..), EulerGridCoord(..), PlainCoord(..), keyCorners)
 import Data.Word (Word8)
+import Data.Maybe (catMaybes)
 import Data.Char (digitToInt)
 import Numeric (showHex)
 import Text.Printf (printf)
@@ -197,9 +198,10 @@ sampleColorRange n rangePoints = case (n, rangePoints) of
                                                 let (rpIndex, fraction) = properFraction (fromIntegral (length rangePoints) * fromIntegral i / (fromIntegral (n-1) :: Float) )]
                                          ++ [rangePoints!!(n-1)]
 
-tolerantParamBuilder :: OkbParam -> [Float] -> [Int] -> [Color] -> OkbParam
-tolerantParamBuilder defaultP canvasPs gridPs colors =
+tolerantParamBuilder :: OkbParam -> [Float] -> [Int] -> [String] -> OkbParam
+tolerantParamBuilder defaultP canvasPs gridPs colorStrings =
   let (stdCanvasPs, stdGridPs, stdColors) = rawParamDeconstructor defaultP
+      colors = catMaybes $ map mkColorHTML colorStrings
       -- update[what] step <remaining new parameters> <remaining std parameters> -> <resulting parameters>
       -- [what] = Canvas
       -- steps: (0 canvas size) (1 (canvas pixel / unit of image)) (2 position of image origin on canvas)
