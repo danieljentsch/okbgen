@@ -139,7 +139,7 @@ stdHeight, stdWidth, stdScalex, stdScaley, stdOriginx, stdOriginy :: Float
 stdHeight = 1080
 stdWidth = 1920
 stdScalex = 400
-stdScaley = -400
+stdScaley = 400
 stdOriginx = 1000
 stdOriginy = 540
 
