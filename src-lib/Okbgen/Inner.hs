@@ -18,7 +18,7 @@ import Data.Maybe (catMaybes)
 import Data.Char (digitToInt)
 import Numeric (showHex)
 import Text.Printf (printf)
-
+import qualified Graphics.Svg as Svg
 import Graphics.Svg (Element,
                      doctype,
                      lA,
@@ -306,6 +306,9 @@ geotest (OkbParam (sizeX, sizeY) (scaleX, scaleY) (orX, orY) (octMin, octMax) (f
                                                              (text_   [ X_ <<- "0", Y_ <<- "0", Font_size_ <<- "0.04", Text_anchor_ <<- "middle", Fill_ <<- (pack $ getColorCode labelColor)]
                                                               (toElement (tonename octaves quints gterzes)))))
   point :: Int -> Int -> Int -> Element
+  point oktave quinte level = Svg.circle_ [Fill_ <<- "#ff0000", X_ <<- "0", Y_ <<- "0", Svg.R_ <<- "0.04"]
+ {-
+  point :: Int -> Int -> Int -> Element
   point oktave quinte level = path_ [Stroke_ <<- (pack $ getColorCode borderColor), Stroke_width_ <<- (toText relativeborderwidth), Fill_ <<- (pack $ getColorCode (colorMap level)), D_ <<- customPointPath level,
                                      Id_ <<- (T.pack $ "key:" ++ show oktave ++ ":" ++ show quinte ++ ":" ++ show level)]
   -- argument: level (thirds)
@@ -316,12 +319,14 @@ geotest (OkbParam (sizeX, sizeY) (scaleX, scaleY) (orX, orY) (octMin, octMax) (f
   customPointPath level = (\(c:cs) -> ((uncurry mA) c <> mconcat (map (uncurry lA) cs) <> (uncurry mA) c <> z))
                           $ map coordfromTuple (plainCoordKeyCorners level)
   -- mind: size of cells: 1 !
+-}
   kbGrid :: EulerGrid
   kbGrid = EulerGrid (PlainCoord 1.0 0.0) (PlainCoord quintx quinty) (PlainCoord gterzx gterzy) [octMin..octMax] [fifthsMin..fifthsMax] [thirdsMin..thirdsMax]
   quintx = (log 3.0 - log 2.0) / (log 2.0)
   gterzx = (log 5.0 - log 4.0) / (log 2.0)
   quinty = 0.2
   gterzy = -quinty* 3.5/7.0
+
 
 -- drawing the keys
 polyedges :: RealFloat a => Int -> a -> Int -> (a, a)
