@@ -91,3 +91,17 @@ executable okbgen
 
     -- Base language which the package is written in.
     default-language: Haskell2010
+
+test-suite tests
+    type:             exitcode-stdio-1.0
+    main-is:          Tests.hs
+    build-depends:    base,
+                      okbgen,
+                      hspec,
+                      QuickCheck,
+                      hmatrix,
+                      svg-builder,
+                      text
+    hs-source-dirs:   tests,
+                      src-lib
+    default-language: Haskell2010
