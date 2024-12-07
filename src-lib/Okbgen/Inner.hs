@@ -203,7 +203,7 @@ sampleColorRange n rangePoints = case (n, rangePoints) of
                 (_, _)              -> [rangePoints!!0]
                                          ++ [ interColor (rangePoints!!rpIndex) (rangePoints!!(rpIndex+1)) fraction
                                               | i <- [1..(n-2)],
-                                                let (rpIndex, fraction) = properFraction (fromIntegral (length rangePoints) * fromIntegral i / (fromIntegral (n-1) :: Float) )]
+                                                let (rpIndex, fraction) = properFraction (fromIntegral (length rangePoints - 1) * fromIntegral i / (fromIntegral (n-1) :: Float) )]
                                          ++ [rangePoints!!(n-1)]
 
 tolerantParamBuilder :: OkbParam -> [Float] -> [Int] -> [String] -> OkbParam
