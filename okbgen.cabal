@@ -60,7 +60,7 @@ library
                     hmatrix,
                     vinyl
   exposed-modules:  Okbgen
-  other-modules:    EulerGrid, Grid, PlainGeometry
+  other-modules:    Okbgen.Inner, EulerGrid, Grid, PlainGeometry
   hs-source-dirs:   src-lib
 
 executable okbgen
