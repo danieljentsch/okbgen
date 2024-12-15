@@ -100,14 +100,14 @@ getLineEquation (LineThroughPoints v1 v2) = do
     canonOrth = rotateByPiByTwo (v2-v1)
 getLineEquation (LineThroughPointInDirection v1 v2) = getLineEquation (LineThroughPoints v1 (v1 + v2))
 
--- Resulting vector is not necessarily of norm 1.
+-- Resulting vector is *not necessarily* of norm 1.
 getCanonOrth :: Line -> Maybe Vect2
 getCanonOrth l = do
   LineByEquation a b c <- getLineEquation l
   pure (makeVect2 a b)
 
-isLeftOf :: Num a => Line -> Vect2 -> Maybe a
-isLeftOf l v = do
+isLeftOf :: Num a => Vect2 -> Line -> Maybe a
+isLeftOf v l = do
   LineByEquation a b c <- getLineEquation l
   clearSignum $ fromList [a, b, c] <.> (appendMinusOne v)
 
