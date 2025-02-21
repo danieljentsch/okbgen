@@ -6,11 +6,11 @@
 module EulerGrid
   ( EulerGrid(..),
     EulerGridCoord(..),
-    PlainCoord(..),
+    PlanarCoord(..),
     keyCorners
   ) where
 
-import qualified PlainGeometry as PG (Vect2, makeVect2, Line(..), intersect)
+import qualified PlanarGeometry as PG (Vect2, makeVect2, Line(..), intersect)
 import Grid (Coordinates(..), GridCoordinates, Grid(..))
 
 import Data.Maybe (catMaybes)
@@ -29,20 +29,20 @@ eZero = EulerGridCoord 0 0 0
 instance GridCoordinates EulerGridCoord
 
 
-data PlainCoord = PlainCoord Double Double
+data PlanarCoord = PlanarCoord Double Double
 
-instance Coordinates PlainCoord Double where
-  coord (a, b) = PlainCoord a b
-  coordfromTuple (PlainCoord a b) = (a, b)
-  cx (PlainCoord a b) = a
-  cy (PlainCoord a b) = b
-  x • (PlainCoord a b) = PlainCoord (x * a) (x * b)
-  asTuple (PlainCoord a b) = (a, b)
-  zero = PlainCoord 0 0
-  (PlainCoord a b) +# (PlainCoord c d) = PlainCoord (a+c) (b+d)
-  (PlainCoord a b) -# (PlainCoord c d) = PlainCoord (a-c) (b-d)
-  llcoord (PlainCoord a b) (PlainCoord c d) = PlainCoord (min a c) (min b d)
-  rucoord (PlainCoord a b) (PlainCoord c d) = PlainCoord (max a c) (max b d)
+instance Coordinates PlanarCoord Double where
+  coord (a, b) = PlanarCoord a b
+  coordfromTuple (PlanarCoord a b) = (a, b)
+  cx (PlanarCoord a b) = a
+  cy (PlanarCoord a b) = b
+  x • (PlanarCoord a b) = PlanarCoord (x * a) (x * b)
+  asTuple (PlanarCoord a b) = (a, b)
+  zero = PlanarCoord 0 0
+  (PlanarCoord a b) +# (PlanarCoord c d) = PlanarCoord (a+c) (b+d)
+  (PlanarCoord a b) -# (PlanarCoord c d) = PlanarCoord (a-c) (b-d)
+  llcoord (PlanarCoord a b) (PlanarCoord c d) = PlanarCoord (min a c) (min b d)
+  rucoord (PlanarCoord a b) (PlanarCoord c d) = PlanarCoord (max a c) (max b d)
 
 
 -- parentframe takes a list of coordinate pairs --  each interpreted as a rectangle -- and returns the coordinate pair representing the smallest rectangle containing the given rectangles.
@@ -58,9 +58,9 @@ parentframe (ce:ces) = parentframehelper ces ce
 -- EulerGrid <vector for octave step> <vector for fifth step> <vector for third step> <List Indizes representing octave coordinates for keys in net> <... fifth ...> <thirds>
 -- For example: "Eulergrid (1,0) (0.6,0.3) (0.35,-0.2) [(-4)..4] [(-3)..3] [(-1)..1]"
 -- for a keyboard ranging over 8 octaves, 6 fifth and 2 (major) thirds
-data EulerGrid = EulerGrid PlainCoord PlainCoord PlainCoord [Int] [Int] [Int]
+data EulerGrid = EulerGrid PlanarCoord PlanarCoord PlanarCoord [Int] [Int] [Int]
 
-instance Grid EulerGrid EulerGridCoord EulerGridCoord PlainCoord Double where
+instance Grid EulerGrid EulerGridCoord EulerGridCoord PlanarCoord Double where
   ingrid2 (EulerGrid oktave quinte gterz oktRange quintRange gterzRange) makeobject
     = [makeobject ((fromIntegral o) • oktave +# (fromIntegral q) • quinte +# (fromIntegral g) • gterz, EulerGridCoord o q g)
       | o <- oktRange, q <- quintRange, g <- gterzRange]
@@ -114,8 +114,8 @@ environ 2    = [ EulerGridCoord 2 (-1) (-4), EulerGridCoord 1 0 (-3), EulerGridC
 -}
 
 -- arguments: Point1, Point2, weight of first (1- priority of other)
-borderLine :: PlainCoord -> PlainCoord -> Int -> Int -> PG.Line
-borderLine (PlainCoord x1 y1) (PlainCoord x2 y2) first_level second_level = PG.LineThroughPointInDirection middle direction
+borderLine :: PlanarCoord -> PlanarCoord -> Int -> Int -> PG.Line
+borderLine (PlanarCoord x1 y1) (PlanarCoord x2 y2) first_level second_level = PG.LineThroughPointInDirection middle direction
   where
     middle = PG.makeVect2 ((x1 + x2) / 2) ((first_weight * y1 + (1 - first_weight) * y2))
     direction = PG.makeVect2 (- ((y2 - y1))) (vert_factor * (x2 - x1))

@@ -12,7 +12,7 @@ module Okbgen.Inner where
 
 
 import Grid (Coordinates(..), ingrid2)
-import EulerGrid (EulerGrid(..), EulerGridCoord(..), PlainCoord(..), keyCorners)
+import EulerGrid (EulerGrid(..), EulerGridCoord(..), PlanarCoord(..), keyCorners)
 import Data.Word (Word8)
 import Data.Maybe (catMaybes)
 import Data.Char (digitToInt)
@@ -41,7 +41,7 @@ import Data.Semigroup (stimesMonoid)
 import Data.Text (Text, pack)
 import qualified Data.Text as T (toTitle, pack)
 import qualified Data.Ix as DI (inRange)
-import qualified PlainGeometry as PG (toPair)
+import qualified PlanarGeometry as PG (toPair)
 
 data Color = RGB Word8 Word8 Word8 deriving (Show,Eq)
 
@@ -273,15 +273,15 @@ okbgen (OkbParam (sizeX, sizeY) (scaleX, scaleY) (orX, orY) (octMin, octMax) (fi
   point oktave quinte level = path_ [Stroke_ <<- (pack $ getColorCode borderColor), Stroke_width_ <<- (toText relativeborderwidth), Fill_ <<- (pack $ getColorCode (colorMap level)), D_ <<- customPointPath level,
                                      Id_ <<- (T.pack $ "key:" ++ show oktave ++ ":" ++ show quinte ++ ":" ++ show level)]
   -- argument: level (thirds)
-  plainCoordKeyCorners :: Int -> [PlainCoord]
-  plainCoordKeyCorners level = [ PlainCoord x y | (x, y) <- (map PG.toPair $ keyCorners kbGrid level) ]
+  planarCoordKeyCorners :: Int -> [PlanarCoord]
+  planarCoordKeyCorners level = [ PlanarCoord x y | (x, y) <- (map PG.toPair $ keyCorners kbGrid level) ]
   -- argument: level (thirds)
   customPointPath :: Int -> Text
   customPointPath level = (\(c:cs) -> ((uncurry mA) c <> mconcat (map (uncurry lA) cs) <> (uncurry mA) c <> z))
-                          $ map coordfromTuple (plainCoordKeyCorners level)
+                          $ map coordfromTuple (planarCoordKeyCorners level)
   -- mind: size of cells: 1 !
   kbGrid :: EulerGrid
-  kbGrid = EulerGrid (PlainCoord 1.0 0.0) (PlainCoord quintx quinty) (PlainCoord gterzx gterzy) [octMin..octMax] [fifthsMin..fifthsMax] [thirdsMin..thirdsMax]
+  kbGrid = EulerGrid (PlanarCoord 1.0 0.0) (PlanarCoord quintx quinty) (PlanarCoord gterzx gterzy) [octMin..octMax] [fifthsMin..fifthsMax] [thirdsMin..thirdsMax]
   quintx = (log 3.0 - log 2.0) / (log 2.0)
   gterzx = (log 5.0 - log 4.0) / (log 2.0)
   quinty = 0.2
@@ -312,16 +312,16 @@ geotest (OkbParam (sizeX, sizeY) (scaleX, scaleY) (orX, orY) (octMin, octMax) (f
   point oktave quinte level = path_ [Stroke_ <<- (pack $ getColorCode borderColor), Stroke_width_ <<- (toText relativeborderwidth), Fill_ <<- (pack $ getColorCode (colorMap level)), D_ <<- customPointPath level,
                                      Id_ <<- (T.pack $ "key:" ++ show oktave ++ ":" ++ show quinte ++ ":" ++ show level)]
   -- argument: level (thirds)
-  plainCoordKeyCorners :: Int -> [PlainCoord]
-  plainCoordKeyCorners level = [ PlainCoord x y | (x, y) <- (map PG.toPair $ keyCorners kbGrid level) ]
+  planarCoordKeyCorners :: Int -> [PlanarCoord]
+  planarCoordKeyCorners level = [ PlanarCoord x y | (x, y) <- (map PG.toPair $ keyCorners kbGrid level) ]
   -- argument: level (thirds)
   customPointPath :: Int -> Text
   customPointPath level = (\(c:cs) -> ((uncurry mA) c <> mconcat (map (uncurry lA) cs) <> (uncurry mA) c <> z))
-                          $ map coordfromTuple (plainCoordKeyCorners level)
+                          $ map coordfromTuple (planarCoordKeyCorners level)
   -- mind: size of cells: 1 !
 -}
   kbGrid :: EulerGrid
-  kbGrid = EulerGrid (PlainCoord 1.0 0.0) (PlainCoord quintx quinty) (PlainCoord gterzx gterzy) [octMin..octMax] [fifthsMin..fifthsMax] [thirdsMin..thirdsMax]
+  kbGrid = EulerGrid (PlanarCoord 1.0 0.0) (PlanarCoord quintx quinty) (PlanarCoord gterzx gterzy) [octMin..octMax] [fifthsMin..fifthsMax] [thirdsMin..thirdsMax]
   quintx = (log 3.0 - log 2.0) / (log 2.0)
   gterzx = (log 5.0 - log 4.0) / (log 2.0)
   quinty = 0.2
@@ -379,7 +379,7 @@ raute (ll,ru) = map coord [(cx ru,0), (0, cy ru), (cx ll, 0), (0, cy ll)]
 
 pointpathD :: Int -> Text
 pointpathD level = (\(c:cs) -> ((uncurry mA) c <> mconcat (map (uncurry lA) cs) <> (uncurry mA) c <> z))
-                   $ map coordfromTuple (raute $ ((pointFrame level) :: (PlainCoord, PlainCoord)))
+                   $ map coordfromTuple (raute $ ((pointFrame level) :: (PlanarCoord, PlanarCoord)))
 
 
 moveElement :: RealFloat a => Element -> a -> a -> Element

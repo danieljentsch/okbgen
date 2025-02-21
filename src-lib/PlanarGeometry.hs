@@ -1,8 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 {-|
-Module      : PlainGeometry
-Description : Provides data types for half-plains in the plane, or, equivalently, directed lines, and an intersection function.
+Module      : PlanarGeometry
+Description : Provides data types for half-planes in the plane, or, equivalently, directed lines, and an intersection function.
 Copyright   : (c) 2024, Daniel Jentsch
 License     : MIT
 Maintainer  : dev@danieljentsch.com
@@ -16,7 +16,7 @@ This module uses `hmatrix` which relies on the LAPACK and BLAS libraries.  On De
 -}
 
 
-module PlainGeometry (
+module PlanarGeometry (
   -- * Vectors in the plane
   Vect2,
   makeVect2,

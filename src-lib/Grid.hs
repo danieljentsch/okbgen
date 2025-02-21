@@ -22,7 +22,7 @@ class RealFloat a => Coordinates c a | c -> a where
 class GridCoordinates gc
 
 
--- ingrid2: associates a list of objects to a grid and a function computing an object from point in the plain and a parameter of type t
+-- ingrid2: associates a list of objects to a grid and a function computing an object from point in the plane and a parameter of type t
 class (RealFloat a, Coordinates c a, GridCoordinates gc) => Grid g t gc c a | g -> c a, g -> gc, g -> t where
   ingrid2 :: g -> ((c, t) -> o) -> [o]
   frame ::  g -> ((c, t) -> (c,c)) -> (c, c)
