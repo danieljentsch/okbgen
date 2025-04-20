@@ -58,7 +58,8 @@ library
                     text,
                     svg-builder,
                     hmatrix,
-                    vinyl
+                    vinyl,
+                    mtl
   exposed-modules:  Okbgen
   other-modules:    Okbgen.Inner, EulerGrid, Grid, PlanarGeometry
   hs-source-dirs:   src-lib
@@ -78,6 +79,7 @@ executable okbgen
 
     -- Other library packages from which modules are imported.
     build-depends:    base,
+                      either,
                       text,
                       svg-builder,
                       vinyl,
@@ -91,6 +93,7 @@ executable okbgen
 
     -- Base language which the package is written in.
     default-language: Haskell2010
+    ghc-options:      -fprint-potential-instances
 
 test-suite tests
     type:             exitcode-stdio-1.0

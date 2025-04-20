@@ -105,7 +105,11 @@ environ :: Int -> [EulerGridCoord]
 environ 0 = [ tn_CCisM, tn_CHis, tn_CCesM, tn_CH, tn_CCesP, tn_CDeses, tn_CCisP, tn_CDes]
 environ 1 = [ tn_EFesM, tn_EEsM, tn_EDis, tn_EEsP, tn_EFesP, tn_EF]
 environ 2 = [ tn_GisAsM, tn_GisG, tn_GisAses, tn_GisAsP, tn_GisA]
-environ (l) = map (\(EulerGridCoord a b c) -> EulerGridCoord (-a) (-b) (-c)) $ environ (-l)
+environ (l) =
+  if l < (-2) || l > 2 then
+    environ 0
+  else
+    map (\(EulerGridCoord a b c) -> EulerGridCoord (-a) (-b) (-c)) $ environ (-l)
 
 {-
 -- old versions
@@ -125,12 +129,14 @@ borderLine (PlanarCoord x1 y1) (PlanarCoord x2 y2) first_level second_level = PG
                     | r == 0                = 0.5
                     | r == (-1)             = (1 - (rankToWeight 1))
                     | r == (-2)             = (1 - (rankToWeight 2))
+                    | otherwise             = 0.5
     vert_factor     | sal == 0 && gal == 0  = 32
                     | sal == 0 && gal == 1  = 32
                     | sal == 0 && gal == 2  = 32
                     | sal == 1 && gal == 1  = 32
                     | sal == 1 && gal == 2  = 32
                     | sal == 2 && gal == 2  = 32
+                    | otherwise             = 32
     sal                                     = minimum [(abs first_level), (abs second_level)]
     gal                                     = maximum [(abs first_level), (abs second_level)]
     diff_abs_level                          = ((abs first_level) - (abs second_level))
@@ -146,9 +152,10 @@ keyShapeLines eg@(EulerGrid vo vq vg ro rq rg) level
 
 -- arguments: Grid, Level(thirds)
 keyCorners :: EulerGrid -> Int -> [PG.Vect2]
-keyCorners eg level
-  = catMaybes [ PG.intersect (lineList!!(mod n lineListLen)) (lineList!!(mod (n+1) lineListLen))
-              | n <- [0..lineListLen] ]
-  where
+keyCorners eg level =
+  let
     lineList = keyShapeLines eg level
     lineListLen = length lineList
+  in
+    catMaybes [ PG.intersect (lineList!!(mod n lineListLen)) (lineList!!(mod (n+1) lineListLen))
+              | n <- [0..lineListLen] ]
