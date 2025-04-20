@@ -289,48 +289,6 @@ okbgen (OkbParam (sizeX, sizeY) (scaleX, scaleY) (orX, orY) (octMin, octMax) (fi
   quinty = 0.2
   gterzy = -quinty* 3.5/7.0
 
-
--- geotest (originates as a okbgen clone, for debugging)
-geotest :: OkbParam -> Element
-geotest (OkbParam (sizeX, sizeY) (scaleX, scaleY) (orX, orY) (octMin, octMax) (fifthsMin, fifthsMax) (thirdsMin, thirdsMax) colorMap) = svg picture where
-  picture = g_ [Transform_ <<- (matrix scaleX 0 0 (-scaleY) (orX) (orY))] keyboard
-  -- svg boilerplate
-  svg :: Element -> Element
-  svg content = doctype <> with (svg11_ content) [Version_ <<- "1.1",
-                                                  Width_ <<- (pack $ show sizeX),
-                                                  Height_ <<- (pack $ show sizeY)]
-  keyboard :: Element
-  keyboard = mconcat (ingrid2 kbGrid makePoint)
-  makePoint :: Coordinates c a => (c, EulerGridCoord) -> Element
-  makePoint (pos, EulerGridCoord octaves quints gterzes)
-    = g_ [Transform_ <<- (translate (cx pos) (cy pos))]
-      (point octaves quints gterzes <>
-        (g_ [Transform_ <<- (matrix 1.0 0.0 0.0 (-1.0) 0.0 0.0)]
-          (text_   [ X_ <<- "0", Y_ <<- "0", Font_size_ <<- "0.04", Text_anchor_ <<- "middle", Fill_ <<- (pack $ getColorCode labelColor)]
-            (toElement (tonename octaves quints gterzes)))))
-  point :: Int -> Int -> Int -> Element
-  point oktave quinte level = Svg.circle_ [Fill_ <<- "#ff0000", X_ <<- "0", Y_ <<- "0", Svg.R_ <<- "0.04"]
- {-
-  point :: Int -> Int -> Int -> Element
-  point oktave quinte level = path_ [Stroke_ <<- (pack $ getColorCode borderColor), Stroke_width_ <<- (toText relativeborderwidth), Fill_ <<- (pack $ getColorCode (colorMap level)), D_ <<- customPointPath level,
-                                     Id_ <<- (T.pack $ "key:" ++ show oktave ++ ":" ++ show quinte ++ ":" ++ show level)]
-  -- argument: level (thirds)
-  planarCoordKeyCorners :: Int -> [PlanarCoord]
-  planarCoordKeyCorners level = [ PlanarCoord x y | (x, y) <- (map PG.toPair $ keyCorners kbGrid level) ]
-  -- argument: level (thirds)
-  customPointPath :: Int -> Text
-  customPointPath level = (\(c:cs) -> ((uncurry mA) c <> mconcat (map (uncurry lA) cs) <> (uncurry mA) c <> z))
-                          $ map coordfromTuple (planarCoordKeyCorners level)
-  -- mind: size of cells: 1 !
--}
-  kbGrid :: EulerGrid
-  kbGrid = EulerGrid (PlanarCoord 1.0 0.0) (PlanarCoord quintx quinty) (PlanarCoord gterzx gterzy) [octMin..octMax] [fifthsMin..fifthsMax] [thirdsMin..thirdsMax]
-  quintx = (log 3.0 - log 2.0) / (log 2.0)
-  gterzx = (log 5.0 - log 4.0) / (log 2.0)
-  quinty = 0.2
-  gterzy = -quinty* 3.5/7.0
-
-
 -- drawing the keys
 polyedges :: RealFloat a => Int -> a -> Int -> (a, a)
 polyedges edges start_angle edge = ( (cos angle) * distance
