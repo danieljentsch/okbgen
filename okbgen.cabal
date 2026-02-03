@@ -20,7 +20,7 @@ name:               okbgen
 -- PVP summary:     +-+------- breaking API changes
 --                  | | +----- non-breaking API additions
 --                  | | | +--- code changes with no API change
-version:            0.3.0.0-dev
+version:            0.3.0.0-rc1
 
 -- A short (one-line) description of the package.
 -- synopsis:
@@ -61,7 +61,7 @@ library
                     vinyl,
                     mtl
   exposed-modules:  Okbgen
-  other-modules:    Okbgen.Inner, EulerGrid, Grid, PlanarGeometry
+  other-modules:    Okbgen.Inner, EulerGrid, Grid, PlanarGeometry, ToSvg, Types
   hs-source-dirs:   src-lib
 
 executable okbgen
@@ -107,5 +107,11 @@ test-suite tests
                       text
     hs-source-dirs:   tests,
                       src-lib
-    other-modules:    Okbgen, Okbgen.Inner, EulerGrid, Grid, PlanarGeometry
+    other-modules:    Okbgen,
+                      Okbgen.Inner,
+                      EulerGrid,
+                      Grid,
+                      PlanarGeometry,
+                      ToSvg,
+                      Types
     default-language: Haskell2010

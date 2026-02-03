@@ -5,12 +5,13 @@
 module Main where
 
 import Control.Exception (try, Exception, SomeException, evaluate)
-import Control.Monad ((>=>), join)
+import Control.Monad (join)
 import Data.Either.Combinators (mapLeft)
 import Data.Functor.Compose (Compose(..))
-import Okbgen
 import System.Environment (getArgs)
 import System.IO (stderr, hPutStrLn)
+
+import Okbgen
 
 
 class SwapMonads m1 m2 where

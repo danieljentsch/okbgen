@@ -1,50 +1,35 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
-
-{-
-module Okbgen (Color(..), mkColorHTML, getColorCode, stdParams, orBlack, OkbParam(..), tolerantParamBuilder, okbgen, Element) where
--}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module Okbgen.Inner where
 
-
-import Grid (Coordinates(..), ingrid2)
-import EulerGrid (EulerGrid(..), EulerGridCoord(..), PlanarCoord(..), keyCorners)
-import Data.Word (Word8)
 import Data.Maybe (catMaybes)
-import Data.Char (digitToInt)
-import Numeric (showHex)
-import Text.Printf (printf)
-import qualified Graphics.Svg as Svg
-import Graphics.Svg (Element,
-                     doctype,
-                     lA,
-                     mA,
-                     matrix,
-                     toElement,
-                     toText,
-                     translate,
-                     renderText,
-                     renderBS,
-                     with,
-                     z,
-                     AttrTag(Transform_, Fill_, Font_size_, Text_anchor_, X_, Y_, D_, Id_, Stroke_width_, Stroke_, Height_, Width_, Version_),
-                     text_,
-                     g_,
-                     path_,
-                     svg11_,
-                     (<<-))
+import Data.Word (Word8)
+import Data.Char (digitToInt, isHexDigit)
+import GHC.Float (float2Double)
+import Graphics.Svg (Element, (<<-))
 import Data.Semigroup (stimesMonoid)
-import Data.Text (Text, pack)
-import qualified Data.Text as T (toTitle, pack)
-import qualified Data.Ix as DI (inRange)
-import qualified PlanarGeometry as PG (toPair)
+import Data.Text (Text)
 
-data Color = RGB Word8 Word8 Word8 deriving (Show,Eq)
+import qualified Data.Text     as T
+import qualified Data.Ix       as DI
+import qualified Graphics.Svg  as Svg
 
+
+import EulerGrid      (EulerGrid(..), EulerGridCoord(..), keyCorners)
+import Grid           (ingrid2)
+import PlanarGeometry (doublePgc)
+import ToSvg
+import Types
+
+
+-- presentation related (html, colors, svg)
 
 black :: Color
 black = RGB 0 0 0
@@ -53,29 +38,24 @@ orBlack :: Maybe Color -> Color
 orBlack (Just color) = color
 orBlack Nothing = black
 
-getColorCode :: Color -> String
-getColorCode (RGB r g b) = printf ("#" ++ concat (replicate 3 "%02x")) r g b
-
 mkColorHTML :: String -> Maybe Color
-mkColorHTML str = case str of
-  '#':rst -> let len = length rst in
-               if len == length (filter (flip (elem @[]) "0123456789abcdef") rst)
-               then
-                 case len of
-                   6 -> Just $ let ([r,g,b],_,_) =
-                                     foldr (\hexDigit (accl, digitIndex, lastDigit) -> (case digitIndex of
-                                                                                          0 -> (accl, 1, (fromIntegral $ digitToInt hexDigit))
-                                                                                          1 -> ((lastDigit+16*(fromIntegral $ digitToInt hexDigit)):accl, 0, 0)))
-                                           ([], 0, 0)
-                                           rst
-                               in
-                                 RGB r g b
-                   3 -> Just $ let [r,g,b] = foldr (\hexDigit accl -> ((16+1)*(fromIntegral $ digitToInt hexDigit)):accl) [] rst in (RGB r g b)
-                   _ -> Nothing
-                 else Nothing
-  _       -> Nothing
-
-interColor :: Color -> Color -> Float -> Color
+mkColorHTML str =
+  let
+    rByte :: Char -> Char -> Maybe Word8
+    rByte d1 d2 =
+      if isHexDigit d1 && isHexDigit d2 then
+        Just $ fromIntegral (digitToInt d1 * 16 + digitToInt d2)
+      else
+        Nothing
+    fromHex :: Char -> Char -> Char -> Char -> Char -> Char -> Maybe Color
+    fromHex r1 r2 g1 g2 b1 b2 =
+      RGB <$> rByte r1 r2 <*> rByte g1 g2 <*> rByte b1 b2
+  in
+    case str of
+      '#':r:g:b:[] -> fromHex r r g g b b
+      '#':r1:r2:g1:g2:b1:b2:[] -> fromHex r1 r2 g1 g2 b1 b2
+ 
+interColor :: RealFloat a => Color -> Color -> a -> Color
 interColor c@(RGB cr cg cb) d@(RGB dr dg db) f
     | f <= 0    = c
     | f >= 1    = d
@@ -83,14 +63,11 @@ interColor c@(RGB cr cg cb) d@(RGB dr dg db) f
   where
     wm a b = round $ (1-f) * (fromIntegral a) + f * (fromIntegral b)
 
-labelColor = RGB 0 0 0
-borderColor = RGB 0 0 0
-
 -- data Layout = LayoutNode
 
 -- data LayoutNode = [];
 
-cellsize, celltowidth, relativeborderwidth :: Double
+cellsize, celltowidth, relativeborderwidth :: RealFloat a => a
 cellsize = 30.0
 celltowidth = 0.1
 relativeborderwidth = 0.001
@@ -100,36 +77,88 @@ relativeborderwidth = 0.001
 tonename :: Int -> Int -> Int -> Text
 tonename octaves quints gterzes = commata <> oktavetonename
   where
-    commata                     | gterzes > 0          = stimesMonoid gterzes ","
-                                | gterzes == 0         = ""
-                                | gterzes < 0          = stimesMonoid (-gterzes) "\'"
-    oktavetonename              | whichoctave > 0      = tonenameroot 0 <> stimesMonoid whichoctave ("\'" :: Text)
-                                | whichoctave == 0     = tonenameroot 0
-                                | whichoctave < 0      = tonenameroot 1 <> stimesMonoid (-1 - whichoctave) ","
-    whichoctave                                        = (floor logdesttobase) :: Int
-    tonenameroot cas                                   = makecase cas $ quintrow (quints + gterzes * 4)
-    logdesttobase                                      = (log 2.0 * fromIntegral octaves + log (3.0/2.0) * fromIntegral quints + log (5.0/4.0) * fromIntegral gterzes) / log 2.0
-    makecase cas txt            | cas == 0             = (txt :: Text)
-                                | cas == 1             = T.toTitle (txt :: Text) --T.toUpper (T.take 1 (txt :: Text)) <> T.takeEnd 1 (txt :: Text)
-    quintrow n                  |         n < (-8)     = qrflat!!(mod (n+1) 7) <> stimesMonoid ((-1) - div (n+1) 7 ) ("es" :: Text)
-                                | DI.inRange (-8, -2) n = qrflat!!((n+1)+7)
-                                | DI.inRange (-1, 5) n  = qrbase!!(n+1)
-                                | DI.inRange (6, 12) n = qrsharp!!((n+1)-7)
-                                | 13   <= n            = qrsharp!!(mod (n+1) 7) <> stimesMonoid (div (n+1) 7 - 1) ("is" :: Text)
-    qrbase                                             = ["f","c","g","d","a","e","h"] :: [Text]
-    qrsharp                                            = ["fis","cis","gis","dis","ais","eis","his"] :: [Text]
-    qrflat                                             = ["fes","ces","ges","des","as","es","b"] :: [Text]
+    commata
+      | gterzes > 0      = stimesMonoid gterzes ","
+      | gterzes == 0     = ""
+      | gterzes < 0      = stimesMonoid (-gterzes) "\'"
+    oktavetonename
+      | whichoctave > 0  =
+          tonenameroot 0 <> stimesMonoid whichoctave ("\'" :: Text)
+      | whichoctave == 0 = tonenameroot 0
+      | whichoctave < 0  =
+        tonenameroot 1 <> stimesMonoid (-1 - whichoctave) ","
+    whichoctave = (floor logdesttobase) :: Int
+    tonenameroot cas     = makecase cas $ quintrow (quints + gterzes * 4)
+    logdesttobase        =
+      (log 2.0 * fromIntegral octaves
+        + log (3.0 / 2.0) * fromIntegral quints
+        + log (5.0 / 4.0) * fromIntegral gterzes)
+      / log 2.0
+    makecase cas txt
+      | cas == 0 = (txt :: Text)
+      | cas == 1 = T.toTitle (txt :: Text)
+    quintrow n
+      | n < (-8) =
+          qrflat !! (mod (n + 1) 7)
+          <> stimesMonoid ((-1) - div (n + 1) 7) ("es" :: Text)
+      | DI.inRange (-8, -2) n = qrflat !! ((n + 1) + 7)
+      | DI.inRange (-1, 5) n = qrbase !! (n + 1)
+      | DI.inRange (6, 12) n = qrsharp !! ((n + 1) - 7)
+      | 13 <= n =
+          qrsharp !! (mod (n + 1) 7)
+          <> stimesMonoid (div (n + 1) 7 - 1) ("is" :: Text)
+    qrbase = ["f", "c", "g", "d", "a", "e", "h"] :: [Text]
+    qrsharp = ["fis", "cis", "gis", "dis", "ais", "eis", "his"] :: [Text]
+    qrflat = ["fes", "ces", "ges", "des", "as", "es", "b"] :: [Text]
 
-data OkbParam = OkbParam { opCanvasSize :: (Float, Float),
-                           opCanvasPxPerUnit :: (Float, Float),
-                           opOriginOnCanvas :: (Float, Float),
-                           opGridOctavesRange :: (Int, Int),
-                           opGridFifthsRange :: (Int, Int),
-                           opGridThirdsRange :: (Int, Int),
-                           opKeyColors :: (Int -> Color) }
+
+
+-- Configuration Parameters
+
+data OkbParam
+  = OkbParam
+  { opCanvasSize       :: (Float, Float)
+  , opCanvasPxPerUnit  :: (Float, Float)
+  , opOriginOnCanvas   :: (Float, Float)
+  , opGridOctavesRange :: (Int, Int)
+  , opGridFifthsRange  :: (Int, Int)
+  , opGridThirdsRange  :: (Int, Int)
+  , opKeyColors        :: (Int -> Color)
+  }
+
+data OkbParam' a
+  = OkbParam'
+  { opCanvasSize' :: (a, a),
+    opCanvasPxPerUnit' :: (a, a),
+    opOriginOnCanvas' :: (a, a),
+    opGridOctavesRange' :: (Int, Int),
+    opGridFifthsRange' :: (Int, Int),
+    opGridThirdsRange' :: (Int, Int),
+    opKeyColors' :: (Int -> Color)
+  }
+
+opDash :: OkbParam -> OkbParam' Float
+opDash (OkbParam a b c d e f g) = (OkbParam' a b c d e f g)
+
+opUndash :: OkbParam' Float -> OkbParam
+opUndash (OkbParam' a b c d e f g) = (OkbParam a b c d e f g)
+
+opFloat2Double :: OkbParam' Float -> OkbParam' Double
+opFloat2Double (OkbParam' (a,b) (c,d) (e,f) g h i j) =
+  OkbParam'
+  (float2Double a, float2Double b)
+  (float2Double c,float2Double d)
+  (float2Double e, float2Double f)
+  g
+  h
+  i
+  j
 
 instance Show OkbParam where
   show pars = show (rawParamDeconstructor pars)
+
+instance (RealFloat a, Show a) => Show (OkbParam' a) where
+  show pars = show (rawParamDeconstructor' pars)
 
 -- standard values
 stdColors :: Int -> String
@@ -140,31 +169,17 @@ stdColors    1 = "#c48569"
 stdColors    2 = "#3f2a1e"
 stdColors    _ = "#ffffff"
 
-stdHeight, stdWidth, stdScalex, stdScaley, stdOriginx, stdOriginy :: Float
-stdHeight = 1080
-stdWidth = 1920
-stdScalex = 400
-stdScaley = 400
-stdOriginx = 1000
-stdOriginy = 540
-
-stdOctsMin, stdOctsMax, stdFifthsMin, stdFifthsMax, stdThirdsMin, stdThirdsMax :: Int
-stdOctsMin = -8
-stdOctsMax = 8
-stdFifthsMin = -10
-stdFifthsMax = 10
-stdThirdsMin = -2
-stdThirdsMax = 2
-
 stdParams :: OkbParam
-stdParams =  OkbParam { opCanvasSize = (stdWidth, stdHeight),
-                        opCanvasPxPerUnit = (stdScalex, stdScaley),
-                        opOriginOnCanvas = (stdOriginx, stdOriginy),
-                        opGridOctavesRange = (stdOctsMin, stdOctsMax),
-                        opGridFifthsRange = (stdFifthsMin, stdFifthsMax),
-                        opGridThirdsRange = (stdThirdsMin, stdThirdsMax),
-                        opKeyColors = orBlack . mkColorHTML . stdColors }
-
+stdParams
+  = OkbParam
+  { opCanvasSize       = (1920, 1080)
+  , opCanvasPxPerUnit  = ( 400,  400)
+  , opOriginOnCanvas   = (1000,  540)
+  , opGridOctavesRange = (  -8,    8)
+  , opGridFifthsRange  = ( -10,   10)
+  , opGridThirdsRange  = (  -2,    2)
+  , opKeyColors = orBlack . mkColorHTML . stdColors
+  }
 
 -- may throw an error!  check arguments
 rawParamBuilder :: [Float] -> [Int] -> [Color] -> OkbParam
@@ -174,18 +189,24 @@ rawParamBuilder [c1,c2,c3,c4,c5,c6] [g1,g2,g3,g4,g5,g6] colors =
     colFun x | x >= g5 && x <= g6 = colors!!(x - g5)
              | otherwise          = colors!!(g6 - g5 + 1)
 
-rawParamDeconstructor :: OkbParam -> ([Float],[Int],[Color])
-rawParamDeconstructor (OkbParam (c1, c2) (c3, c4) (c5, c6) (g1, g2) (g3, g4) (g5, g6) colFun) =
+rawParamDeconstructor' :: RealFloat a => OkbParam' a -> ([a],[Int],[Color])
+rawParamDeconstructor'
+  (OkbParam' (c1, c2) (c3, c4) (c5, c6) (g1, g2) (g3, g4) (g5, g6) colFun) =
   ([c1,c2,c3,c4,c5,c6], [g1,g2,g3,g4,g5,g6], colors)
   where
     colors = map colFun [g5..(g6+1)]
 
---TODO: Check if (a == 0) false implies that (x / a) is not an error (for floats).
+rawParamDeconstructor :: OkbParam -> ([Float],[Int],[Color])
+rawParamDeconstructor = rawParamDeconstructor' . opDash
+
+-- TODO: Check if (a == 0) false implies that
+--       (x / a) is not an error (for floats).
 updateHeightKeepRatio oldWidth oldHeight newWidth
   | oldWidth == 0  = oldHeight
   | otherwise      = oldHeight * newWidth / oldWidth
 
--- try to center an integer range around center of given range; if necessary, move slightly up
+-- try to center an integer range around center of given range;
+--   if necessary, move slightly up
 updateRange :: Int -> Int -> Int -> (Int, Int)
 updateRange oldMin oldMax newDiff =
   let twiceUpper = oldMin + oldMax + newDiff
@@ -196,39 +217,72 @@ updateRange oldMin oldMax newDiff =
 
 sampleColorRange :: Int -> [Color] -> [Color]
 sampleColorRange n rangePoints = case (n, rangePoints) of
-                (n', _)  | n' <= 0  -> []
-                (_, [])             -> replicate n black
-                (_, [color])        -> replicate n color
-                (1, (r:rps))        -> let [a,b,c] = replicate 3 rangePoints in b
-                (_, _)              -> [rangePoints!!0]
-                                         ++ [ interColor (rangePoints!!rpIndex) (rangePoints!!(rpIndex+1)) fraction
-                                              | i <- [1..(n-2)],
-                                                let (rpIndex, fraction) = properFraction (fromIntegral (length rangePoints - 1) * fromIntegral i / (fromIntegral (n-1) :: Float) )]
-                                         ++ [rangePoints!!(n-1)]
+  (n', _)  | n' <= 0  -> []
+  (_, [])             -> replicate n black
+  (_, [color])        -> replicate n color
+  (1, (r:rps))        -> let [a,b,c] = replicate 3 rangePoints in b
+  (_, _)              ->
+    [rangePoints!!0]
+    ++ [ interColor
+         (rangePoints!!rpIndex)
+         (rangePoints!!(rpIndex+1))
+         fraction
+       | i <- [1..(n-2)],
+         let (rpIndex, fraction) =
+               properFraction
+               (fromIntegral (length rangePoints - 1)
+                * fromIntegral i
+                / (fromIntegral (n-1) :: Float) )
+       ]
+    ++ [rangePoints!!(n-1)]
 
 tolerantParamBuilder :: OkbParam -> [Float] -> [Int] -> [String] -> OkbParam
 tolerantParamBuilder defaultP canvasPs gridPs colorStrings =
   let (stdCanvasPs, stdGridPs, stdColors) = rawParamDeconstructor defaultP
       colors = catMaybes $ map mkColorHTML colorStrings
-      -- update[what] step <remaining new parameters> <remaining std parameters> -> <resulting parameters>
+      -- update[what]
+      --   step
+      --   <remaining new parameters>
+      --   <remaining std parameters>
+      --   = <resulting parameters>
+      -- where
       -- [what] = Canvas
-      -- steps: (0 canvas size) (1 (canvas pixel / unit of image)) (2 position of image origin on canvas)
-      updateCanvas step (n:m:ns) (d:e:ds) = (if step < 3 then  n:m:(updateCanvas (step+1) ns ds) else [])
-      updateCanvas 0    [n]      (d:e:ds) = n:(updateHeightKeepRatio d e n):ds -- updating canvas size
-      updateCanvas 1    [n]      (d:e:ds) = n:(updateHeightKeepRatio d e n):ds -- updating (canvas pixel / unit of image)
-      updateCanvas 2    [n]      (d:e:ds) = [n,e] -- updating position of image origin on canvas
+      -- steps:
+      --   (0 canvas size)
+      --   (1 (canvas pixel / unit of image))
+      --   (2 position of image origin on canvas)
+      updateCanvas step (n:m:ns) (d:e:ds) =
+        (if step < 3 then  n:m:(updateCanvas (step+1) ns ds) else [])
+      -- | updating canvas size
+      updateCanvas 0    [n]    (d:e:ds) = n:(updateHeightKeepRatio d e n):ds
+      -- | updating (canvas pixel / unit of image)
+      updateCanvas 1    [n]    (d:e:ds) = n:(updateHeightKeepRatio d e n):ds 
+      -- | updating position of image origin on canvas
+      updateCanvas 2    [n]      (d:e:ds) = [n,e] 
       updateCanvas step [] allds@(d:e:ds) = allds
       updateCanvas _    _              ds = ds -- should never occur
       -- [what] = Grid
-      -- steps: (0 octave range) (1 fifths range) (2 position of image origin on canvas)
+      -- steps:
+      --   (0 octave range)
+      --   (1 fifths range)
+      --   (2 position of image origin on canvas)
       updateGrid :: Int -> [Int] -> [Int] -> [Int]
       updateGrid step newP defaultP = case (step, newP, defaultP) of
-        (0,    nt@[n,m,l], ds@[dl,dh,el,eh,fl,fh])   | n >= 0 && m >= 0 && l >= 0  -> foldr (\(a,b) acc -> a:b:acc) [] ({-new ranges as pairs-} zipWith3 updateRange nt [dl,el,fl] [dh,eh,fh])
-        (step, (n:m:ns),   allds@(d:e:ds))           | n <= m                      -> n:m:(updateGrid (step+1) ns ds)
-        (step, (n:ns),     allds@(d:e:ds))           | n >= 0                      -> let (n',m') = updateRange d e n in n':m':(updateGrid (step+1) ns ds)
-                                                     | otherwise                   -> n:(n+e-d):(updateGrid (step+1) ns ds)
-        (step, [],         allds)                                                  -> allds
-        (step,  _,         _)                                                      -> []
+        (0,    nt@[n,m,l], ds@[dl,dh,el,eh,fl,fh])
+          | n >= 0 && m >= 0 && l >= 0  ->
+            foldr
+            (\(a,b) acc -> a:b:acc)
+            []
+            (zipWith3 updateRange nt [dl,el,fl] [dh,eh,fh])
+        (step, (n:m:ns),   allds@(d:e:ds))
+          | n <= m  -> n:m:(updateGrid (step+1) ns ds)
+        (step, (n:ns),     allds@(d:e:ds))
+          | n >= 0  ->
+              let (n',m') = updateRange d e n
+              in n':m':(updateGrid (step+1) ns ds)
+          | otherwise             -> n:(n+e-d):(updateGrid (step+1) ns ds)
+        (step, [],         allds) -> allds
+        (step,  _,         _)     -> []
       updatedGridParameters :: [Int]
       updatedGridParameters = (updateGrid   0   gridPs   stdGridPs)
       updatedColors = let
@@ -240,50 +294,69 @@ tolerantParamBuilder defaultP canvasPs gridPs colorStrings =
         newLevelCard = newLevelMax - newLevelMin + 1
         in
           case colors of
-            []                                     -> [ c | level <- [newLevelMin..newLevelMax], let c = if elem level [stdLevelMin..stdLevelMax]
-                                                                                                         then stdColors!!(level-stdLevelMin)
-                                                                                                         else stdDefaultColor] ++ [stdDefaultColor]
-            c:cs  | length colors >  newLevelCard  -> take (newLevelCard + 1) colors
-                  | length (c:cs) == newLevelCard  -> take newLevelCard colors ++ [stdDefaultColor]
-                  | otherwise                      -> sampleColorRange newLevelCard colors ++ [stdDefaultColor]
+            [] -> [ c | level <- [newLevelMin..newLevelMax]
+                      , let c = if elem level [stdLevelMin..stdLevelMax]
+                                then stdColors!!(level-stdLevelMin)
+                                else stdDefaultColor] ++ [stdDefaultColor]
+            c:cs  | length colors >  newLevelCard  ->
+                      take (newLevelCard + 1) colors
+                  | length (c:cs) == newLevelCard  ->
+                      take newLevelCard colors ++ [stdDefaultColor]
+                  | otherwise                      ->
+                    sampleColorRange newLevelCard colors ++ [stdDefaultColor]
   in
     rawParamBuilder (updateCanvas 0 canvasPs stdCanvasPs)
                     updatedGridParameters
                     updatedColors
 
 
+-- core
 
 okbgen :: OkbParam -> Element
-okbgen (OkbParam (sizeX, sizeY) (scaleX, scaleY) (orX, orY) (octMin, octMax) (fifthsMin, fifthsMax) (thirdsMin, thirdsMax) colorMap) = svg picture where
-  picture = g_ [Transform_ <<- (matrix scaleX 0 0 (-scaleY) (orX) (orY))] keyboard
-  -- svg boilerplate
-  svg :: Element -> Element
-  svg content = doctype <> with (svg11_ content) [Version_ <<- "1.1",
-                                                  Width_ <<- (pack $ show sizeX),
-                                                  Height_ <<- (pack $ show sizeY)]
+okbgen params = okbgen' doublePgc (opFloat2Double $ opDash params)
+
+
+okbgen'
+  :: forall a l.
+     RealFloat a
+  => PlaneGeoComputer a l
+  ->  OkbParam' a
+  -> Element
+okbgen'
+  pgc
+  (OkbParam'
+    (sizeX, sizeY)
+    (scaleX, scaleY)
+    (orX, orY)
+    (octMin, octMax)
+    (fifthsMin, fifthsMax)
+    (thirdsMin, thirdsMax)
+    colorMap) =
+  svg sizeX sizeY scaleX scaleY orX orY keyboard where
   keyboard :: Element
   keyboard = mconcat (ingrid2 kbGrid makePoint)
-  makePoint :: Coordinates c a => (c, EulerGridCoord) -> Element
-  makePoint (pos, EulerGridCoord octaves quints gterzes)
-    = g_ [Transform_ <<- (translate (cx pos) (cy pos))]
-      (point octaves quints gterzes <>
-        (g_ [Transform_ <<- (matrix 1.0 0.0 0.0 (-1.0) 0.0 0.0)]
-          (text_   [ X_ <<- "0", Y_ <<- "0", Font_size_ <<- "0.04", Text_anchor_ <<- "middle", Fill_ <<- (pack $ getColorCode labelColor)]
-            (toElement (tonename octaves quints gterzes)))))
-
-  point :: Int -> Int -> Int -> Element
-  point oktave quinte level = path_ [Stroke_ <<- (pack $ getColorCode borderColor), Stroke_width_ <<- (toText relativeborderwidth), Fill_ <<- (pack $ getColorCode (colorMap level)), D_ <<- customPointPath level,
-                                     Id_ <<- (T.pack $ "key:" ++ show oktave ++ ":" ++ show quinte ++ ":" ++ show level)]
+  makePoint :: (Coordinates a, EulerGridCoord) -> Element
+  makePoint ((posX, posY), EulerGridCoord octaves quints gterzes)
+    = makeKeySvg
+      relativeborderwidth
+      (planarCoordKeyCorners gterzes)
+      (colorMap gterzes)
+      (posX, posY)
+      (tonename octaves quints gterzes)
+      (T.pack $
+        "key:" ++ show octaves ++ ":" ++ show quints ++ ":" ++ show gterzes)
   -- argument: level (thirds)
-  planarCoordKeyCorners :: Int -> [PlanarCoord]
-  planarCoordKeyCorners level = [ PlanarCoord x y | (x, y) <- (map PG.toPair $ keyCorners kbGrid level) ]
-  -- argument: level (thirds)
-  customPointPath :: Int -> Text
-  customPointPath level = (\(c:cs) -> ((uncurry mA) c <> mconcat (map (uncurry lA) cs) <> (uncurry mA) c <> z))
-                          $ map coordfromTuple (planarCoordKeyCorners level)
+  planarCoordKeyCorners :: Int -> [Coordinates a]
+  planarCoordKeyCorners level = keyCorners pgc kbGrid level
   -- mind: size of cells: 1 !
-  kbGrid :: EulerGrid
-  kbGrid = EulerGrid (PlanarCoord 1.0 0.0) (PlanarCoord quintx quinty) (PlanarCoord gterzx gterzy) [octMin..octMax] [fifthsMin..fifthsMax] [thirdsMin..thirdsMax]
+  kbGrid :: EulerGrid a
+  kbGrid = EulerGrid
+    (1.0, 0.0)
+    (quintx, quinty)
+    (gterzx, gterzy)
+    [octMin..octMax]
+    [fifthsMin..fifthsMax]
+    [thirdsMin..thirdsMax]
   quintx = (log 3.0 - log 2.0) / (log 2.0)
   gterzx = (log 5.0 - log 4.0) / (log 2.0)
   quinty = 0.2
@@ -291,10 +364,12 @@ okbgen (OkbParam (sizeX, sizeY) (scaleX, scaleY) (orX, orY) (octMin, octMax) (fi
 
 -- drawing the keys
 polyedges :: RealFloat a => Int -> a -> Int -> (a, a)
-polyedges edges start_angle edge = ( (cos angle) * distance
-                                   , (sin angle) * distance )
+polyedges edges start_angle edge =
+  ( (cos angle) * distance, (sin angle) * distance )
   where
-    angle = ((fromIntegral edge) / (fromIntegral edges) * (fromIntegral 2) * pi) + start_angle
+    angle =
+      ((fromIntegral edge) / (fromIntegral edges)* (fromIntegral 2) * pi)
+      + start_angle
     distance = 0.5 / cos (pi / 6.0)
 
 lineway :: RealFloat a => (a, a) -> (a, a) -> a -> (a, a)
@@ -308,53 +383,5 @@ getedgeS x = lineway (getedge f) (getedge $ f+1) (x - (fromIntegral f))
   where
     f = floor x
 
-edgepathD :: [Int] -> Text
-edgepathD (c:cs) = uncurry mA (getedge c)
-                  <> mconcat (map (uncurry lA . getedge) (c:cs))
-                  <> z
-                  <> uncurry mA (getedge c)
-
-edgepathDS :: RealFloat a => [a] -> Text
-edgepathDS (c:cs) = uncurry mA (getedgeS c)
-                  <> mconcat (map (uncurry lA . getedgeS) (c:cs))
-                  <> z
-                  <> uncurry mA (getedgeS c)
-
 pointscalefactor :: RealFloat a => a
 pointscalefactor = 0.06
-
--- helper
-tupleMap :: (a -> c) -> (a,a) -> (c,c)
-tupleMap f (x1, x2) = (f x1, f x2)
-
-pointFrame :: (RealFloat a, Coordinates c a) => Int -> (c,c)
-pointFrame   0  = tupleMap ((pointscalefactor •) . coord) ((-1.0,-8.0),(1.0,8.0))
-pointFrame   1  = tupleMap ((pointscalefactor •) . coord) ((-1.0,-6.0),(1.0,6.0))
-pointFrame (-1) = tupleMap ((pointscalefactor •) . coord) ((-1.0,-6.0),(1.0,6.0))
-pointFrame   2  = tupleMap ((pointscalefactor •) . coord) ((-1.0,-2.0),(1.0,2.0))
-pointFrame (-2) = tupleMap ((pointscalefactor •) . coord) ((-1.0,-2.0),(1.0,2.0))
-
-raute :: Coordinates c a => (c,c) -> [c]
-raute (ll,ru) = map coord [(cx ru,0), (0, cy ru), (cx ll, 0), (0, cy ll)]
-
-
-pointpathD :: Int -> Text
-pointpathD level = (\(c:cs) -> ((uncurry mA) c <> mconcat (map (uncurry lA) cs) <> (uncurry mA) c <> z))
-                   $ map coordfromTuple (raute $ ((pointFrame level) :: (PlanarCoord, PlanarCoord)))
-
-
-moveElement :: RealFloat a => Element -> a -> a -> Element
-moveElement e x y = g_ [Transform_ <<- (translate x y)] e
-
-
-
-
--- compute frame
-makePointFrame :: Coordinates c a => (c, EulerGridCoord) -> (c, c)
-makePointFrame (pos, EulerGridCoord octaves quints gterzes) = tupleMap (pos +#) $ pointFrame gterzes
-
-
---keyboard = g_ [] $ (ingrid Stdhexgrid cell cellsx cellsy)
-
-
-
