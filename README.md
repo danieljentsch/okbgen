@@ -71,6 +71,16 @@ writes the source for the following svg image to the standard output:
 
 This library exposes a module `Okbgen` which exposes the following:
 
+#### central function of the library: okbgen
+
+```
+okbgen :: OkbParam -> Element
+```
+
+#### `Element` (reexport of Graphics.Svg.Element)
+
+This svg element data type is the target of the `okbgen` function.
+
 #### Configuration Data Type and auxiliary functions and stardard value
 
 ```
@@ -136,14 +146,6 @@ orBlack :: Maybe Color -> Color
 
 which might be used to get a `Color` value which defaults to black
 (`RGB 0 0 0`) if `Nothing` is provided.
-
-#### `Element` (reexport of Graphics.Svg.Element)
-
-#### central function of the library: okbgen
-
-```
-okbgen :: OkbParam -> Element
-```
 
 ## Notes
 
